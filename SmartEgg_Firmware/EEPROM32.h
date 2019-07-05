@@ -1,5 +1,5 @@
 /*
-  EEPROM32.cpp - EEPROM Library with extended addressing support
+  EEPROM32.h - EEPROM Library with extended addressing support
   Copyright (c) 2017 Andrew Miyaguchi. All rights reserved.
 
   This library is free software; you can redistribute it and/or

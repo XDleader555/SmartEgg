@@ -56,4 +56,3 @@ void EEPROM32::erase() {
 }
 
 EEPROM32 EEPROM;
-

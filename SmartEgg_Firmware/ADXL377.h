@@ -20,20 +20,16 @@
 #define ADXL377_H
 
 #include "Arduino.h"
+#include "Functions.h"
 #include <Preferences.h>
 #include <driver/adc.h>
 #include <esp_adc_cal.h>
 
 #define ROLLING_AVG_SIZE 100 /* Size of the rolling average */
-#define mapf(val, in_min, in_max, out_min, out_max) \
-  ((float) val - (float) in_min)\
-  * ((float) out_max - (float) out_min)\
-  / ((float) in_max - (float) in_min)\
-  + (float) out_min
-  
+
 class ADXL377 {
   public:
-    ADXL377(adc1_channel_t xPin, adc1_channel_t yPin, adc1_channel_t zPin, int stPin);
+    ADXL377(adc1_channel_t xPin, adc1_channel_t yPin, adc1_channel_t zPin, int stPin, int vccPin, int gndPin);
     void run();
     void updateAvg();
     String calibrate();
@@ -53,6 +49,8 @@ class ADXL377 {
     uint32_t m_vRef;                       // Reference Voltage from internal 1.1v regualtor
     uint32_t m_vReg;                       // Reference Voltage from external 3.3v regulator
     int m_stPin;
+    int m_vccPin;
+    int m_gndPin;
     int m_rollingAvgIter;
     float m_offsets[3];
     float* m_rollingAvgBuffer[ROLLING_AVG_SIZE];            /* Holds values for the rolling avg */

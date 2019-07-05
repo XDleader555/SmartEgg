@@ -159,13 +159,13 @@ void Terminal::run() {
         SMARTEGG.accel->calibrate();
         break; 
       case 9: /* getTemp */
-        //Serial.printf("Current Temperature: %.1f°F\n", temperatureRead());
-        Serial.println("Temperature read disabled due to conflict with accelerometer");
+        Serial.printf("Current Temperature: %.1f°F\n", temperatureRead());  
+        //Serial.println("Temperature read disabled due to conflict with accelerometer");
         break;
       case 10: /* routeVRef */
-        if (adc2_vref_to_gpio(GPIO_NUM_25) == ESP_OK){
+        if (adc2_vref_to_gpio(GPIO_NUM_27) == ESP_OK){
             SMARTEGG.accel->disableRolling();
-            printf("v_ref routed to GPIO 25 and rolling avg disabled. Reboot to remove route.\n");
+            printf("v_ref routed to GPIO 27 and rolling avg disabled. Reboot to remove route.\n");
         } else {
             printf("Failed to route v_ref\n");
         }
@@ -305,4 +305,3 @@ void Terminal::cat(String path) {
 
   file.close();
 }
-

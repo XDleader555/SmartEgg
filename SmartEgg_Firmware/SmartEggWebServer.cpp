@@ -1,6 +1,6 @@
-#include "WebServer.h"
+#include "SmartEggWebServer.h"
 
-WebServer::WebServer() {
+SmartEggWebServer::SmartEggWebServer() {
   /* Setup the Filesystem */
   Serial.print("Mounting filesystem... ");
   if(!SPIFFS.begin(true)){
@@ -13,6 +13,7 @@ WebServer::WebServer() {
 
   /* Start the WiFi Access Point */
   WiFi.mode(WIFI_AP);
+  WiFi.setSleep(false);
   WiFi.softAPsetHostname(SMARTEGG.getAPName().c_str());
   WiFi.softAP(SMARTEGG.getAPName().c_str());
   
@@ -23,7 +24,7 @@ WebServer::WebServer() {
 
   /* Setup the WebServer */
   m_server = new AsyncWebServer(80);
-  m_server->serveStatic("/", SPIFFS, "/html/").setDefaultFile("index.html");;
+  m_server->serveStatic("/", SPIFFS, "/html/").setDefaultFile("index.html");
 
   /* Basic Responses */
   m_server->on("/heap", HTTP_GET, [](AsyncWebServerRequest *request){

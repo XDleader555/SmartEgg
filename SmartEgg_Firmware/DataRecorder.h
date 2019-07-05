@@ -20,6 +20,7 @@
 #define DATARECORDER_H
 
 #include "Arduino.h"
+#include "Functions.h"
 #include "EEPROM32.h"
 #include "ADXL377.h"
 #include <math.h>
@@ -114,4 +115,5 @@ class DataRecorder {
     void chunkedReadInit(String name, int readType);
     int chunkedRead(uint8_t *buffer, size_t maxLen, size_t index);
 };
+
 #endif /* DATARECORDER_H */

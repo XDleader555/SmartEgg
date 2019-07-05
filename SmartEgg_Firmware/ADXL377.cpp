@@ -1,6 +1,7 @@
 #include "ADXL377.h"
 
-ADXL377::ADXL377(adc1_channel_t xPin, adc1_channel_t yPin, adc1_channel_t zPin, int stPin) {
+ADXL377::ADXL377(adc1_channel_t xPin, adc1_channel_t yPin, adc1_channel_t zPin, int stPin, int vccPin, int gndPin) {
+  Serial.println("Initializing Accelerometer...");
   m_rollingAvgIter = 0;
   m_calibrating = false;
   m_allowRolling = true;
@@ -10,11 +11,18 @@ ADXL377::ADXL377(adc1_channel_t xPin, adc1_channel_t yPin, adc1_channel_t zPin, 
   m_pins[2] = zPin;
 
   m_stPin = stPin;
+  m_vccPin = vccPin;
+  m_gndPin = gndPin;
 
   pinMode(m_stPin, OUTPUT);
+  pinMode(m_vccPin, OUTPUT);
+  pinMode(m_gndPin, OUTPUT);
   digitalWrite(m_stPin, LOW);
+  digitalWrite(m_vccPin, HIGH);
+  digitalWrite(m_gndPin, LOW);
 
-
+  /* Wait for the chip to turn on */
+  delay(5);
 
   /* Grab the calibration data if it exists */
   m_pref = new Preferences();
@@ -38,6 +46,23 @@ ADXL377::ADXL377(adc1_channel_t xPin, adc1_channel_t yPin, adc1_channel_t zPin, 
   /* Initialize the rolling average buffer */
   for(int i = 0; i < ROLLING_AVG_SIZE; i++)
     m_rollingAvgBuffer[i] = (float*) malloc(3 * sizeof(float));
+
+
+  /* Self test */
+  float* st_tare = read();
+  digitalWrite(m_stPin, HIGH);
+  delay(1);
+  float* st = read();
+  digitalWrite(m_stPin, LOW);
+  
+  Serial.printf("Self Test x=%f, y=%f, z=%f\n",
+    mapf(st[0] - st_tare[0], 0, 4095, -200, 200),
+    mapf(st[1] - st_tare[1], 0, 4095, -200, 200),
+    mapf(st[2] - st_tare[2], 0, 4095, -200, 200)
+  );
+  
+  free(st_tare);
+  free(st);
 }
 
 void ADXL377::setVReg(int vReg) {

@@ -16,8 +16,8 @@
   along with SmartEgg_Firmware.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#ifndef WEBSERVER_H
-#define WEBSERVER_H
+#ifndef SmartEggWebServer_H
+#define SmartEggWebServer_H
 
 #include "Arduino.h"
 #include "SmartEgg.h"
@@ -25,16 +25,15 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
-class WebServer {
+class SmartEggWebServer {
   public:
-    WebServer();
-    void run();
-    
+    SmartEggWebServer();
+
   private:
     AsyncWebServer* m_server;
     AsyncWebSocket* m_ws;
     AsyncEventSource* m_events;
-    
+
     static void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
 };
-#endif /* WEBSERVER_H */
+#endif /* SmartEggWebServer_H */

@@ -1,11 +1,10 @@
-
 #include "SmartEgg.h"
 
 SmartEgg::SmartEgg() {
 }
 
 bool SmartEgg::begin() {
-  accel = new ADXL377(ADC1_CHANNEL_2, ADC1_CHANNEL_1, ADC1_CHANNEL_0, 39);
+  accel = new ADXL377(ADC1_CHANNEL_7, ADC1_CHANNEL_6, ADC1_CHANNEL_5, 39, 25, 26);
   dataRec = new DataRecorder(accel);
 
   m_pref = new Preferences();
@@ -64,4 +63,3 @@ void SmartEgg::writeTask(void *pvParameter) {
 }
 
 SmartEgg SMARTEGG;
-

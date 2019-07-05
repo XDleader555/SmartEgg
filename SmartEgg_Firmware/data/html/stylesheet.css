@@ -1,0 +1,38 @@
+.custom-container {
+  min-width: 600px;
+  height: 400px;
+  margin: 0 auto;
+  margin-top: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+.form-label {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+
+/* Top Right corner Button placement for Delete Drop button */
+#delete-button {
+ margin-top: 1px;
+ margin-right: 2px;
+ float:right;
+ top:0;
+ right:0;
+}
+
+/* Class for elements hidden on load */
+.hide-by-default {
+  display: none;
+}
+
+#loading-text {
+  margin:50px;
+}
+
+#loading {
+  background-color: rgb(0, 255, 234);
+  height: 100vh;
+  margin-bottom: -100px;
+}

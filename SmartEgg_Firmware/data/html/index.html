@@ -1,0 +1,94 @@
+<!DOCTYPE HTML>
+
+<html>
+  <head>
+    <title>Digital Egg Drop Page</title>
+    <link rel="stylesheet" href="./font-awesome.min.css">
+    <link rel="stylesheet" href="./stylesheet.css">
+    <script src="./jquery.min.js"></script>
+    <script src="./highstockchart.min.js"></script>
+  </head>
+
+  <body>
+    <div id="main-content">
+      <section class="hero is-primary">
+          <div class="hero-body">
+            <div class="container">
+              <h1 class="title">
+                Welcome to the egg drop page!
+              </h1>
+              <h2 class="subtitle">
+                <p>
+               		Select any tab to review and download the drop's results.
+                </p>
+              </h2>
+               
+            </div>
+          </div>
+
+          <!-- Drop history Tabs -->
+          <div class="hero-foot">
+            <nav class="tabs is-boxed is-fullwidth">
+              <div class="container">
+                <ul id="drop-history">
+                  <!-- drop name List elements here -->
+                </ul>
+              </div>
+            </nav>
+          </div>
+        </section>
+
+		 <div id="drop-details-container" class="custom-container hide-by-default">
+            <div class="columns">
+              <div class="column is-12">
+                <nav class="level">
+                  <div class="level-item has-text-centered">
+                      <button id="download-btn" type="submit" class="button is-info" onclick="downloadCsv()">Download CSV</button> 
+                  </div>
+                </nav>
+              </div>
+            </div>
+
+            <!-- Chart Columns -->
+            <div class="columns">
+              <div class="column is-12">
+                <nav class="level">
+                  <p id="charting-container" class="level-item has-text-centered">
+                    <!-- Charting section -->
+                    <div id="my-modal" class="modal">
+						<div class="modal-background"></div>
+							<div class="modal-card">
+								<header class="modal-card-head">
+									<p class="modal-card-title">Confirm Delete</p>
+									<button class="delete" aria-label="close" onClick="closeModal()"></button>
+								</header>
+								<section class="modal-card-body">
+									<!-- Content ... -->
+									Are you sure you\'d like to delete the drop "' + dropName + '"? There is no undoing this operation. 
+								</section>
+								<footer class="modal-card-foot">
+									<div id="modal-delete-btn">
+				            <button id="confirm-delete" class="button is-danger" onClick="deleteDrop()">Delete Drop</button>
+				  					<button id="close-delete-modal" class="button" onClick="closeModal()">Cancel</button>
+				          </div>
+				          <div id="modal-delete-btn-loading">
+				            <button id="confirm-delete-loading" class="button is-danger is-loading" onClick="deleteDrop()">Delete Drop</button>
+				            <button id="close-delete-modal-loading" class="button" disabled="true" onClick="closeModal()">Cancel</button>
+				          </div>
+								</footer>
+							</div>
+						</div>
+                  </p>
+                </nav>
+              </div>
+            </div> <!-- End Chart's Row -->
+
+    	</div> <!-- End drop-details-container -->
+
+</div>
+
+
+</body>
+<script src="./scripts.js"></script>
+
+</html>

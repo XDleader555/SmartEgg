@@ -1,0 +1,22 @@
+{
+  "recordStart":
+  {
+    "id": 1,
+    "status": 0
+  },
+  "recordList":
+  {
+    "names":"123"
+  },
+  "recordStop":
+  {
+    "id": 1,
+    "status": 0
+  },
+  "recordGetAxes":
+  {
+    "id": 1,
+    "data": "t,x,y,z\n0,3,1,4\n1,4,5,6\n2,3,5,7\n3,4,50,33\n4,32,13,55"
+  }
+}
+

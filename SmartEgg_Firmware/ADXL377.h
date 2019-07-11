@@ -20,7 +20,7 @@
 #define ADXL377_H
 
 #include "Arduino.h"
-#include "Functions.h"
+#include <MiyaFunctions.h>
 #include <Preferences.h>
 #include <driver/adc.h>
 #include <esp_adc_cal.h>

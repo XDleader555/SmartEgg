@@ -20,7 +20,7 @@
 #define DATARECORDER_H
 
 #include "Arduino.h"
-#include "Functions.h"
+#include <MiyaFunctions.h>
 #include "EEPROM32.h"
 #include "ADXL377.h"
 #include <math.h>

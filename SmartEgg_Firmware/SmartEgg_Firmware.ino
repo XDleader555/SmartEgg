@@ -2,7 +2,7 @@
   SmartEgg_Firmware - Data collection firmware for an ESP32 based egg drop
   Copyright (c) 2019 Andrew Miyaguchi. All rights reserved.
 
-  This program is free software: you can redistribute it and/or modify
+  This program is free software: you can redistribute it a nd/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
@@ -19,13 +19,14 @@
 #include <driver/adc.h>
 #include <stdlib.h>
 #include <DNSServer.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include <MiyaSh.h>
 #include "SmartEgg.h"
 #include "ADXL377.h"
 #include "DataRecorder.h"
-#include "Terminal.h"
 #include "SPIFFS.h"
-#include <AsyncTCP.h>
-#include <ESPAsyncWebServer.h>
+#include "Commands.h"
 
 #define DNS_PORT 53
 #define LED_PIN 5
@@ -35,11 +36,10 @@ DNSServer dnsServer;
 AsyncWebServer m_server(80);
 AsyncWebSocket* m_ws;
 AsyncEventSource* m_events;
-Terminal* term; 
 
 void webServerTask(void *pvParameters);
 void dnsServerTask(void *pvParameter);
-void termTask(void *pvParameters);
+void miyaShTask(void *pvParameters);
 void rollingAvgTask(void *pvParameter);
 void btnTask(void *pvParameter);
 
@@ -66,9 +66,9 @@ void setup() {
   dnsServer.start(DNS_PORT, "ngcsmart.egg", WiFi.softAPIP());
   
   /* Start CPU0 tasks, higher number means higher priority */
-  //xTaskCreatePinnedToCore(dnsServerTask, "dnsServerTask", 4096, NULL, 1, NULL, 0);
-  xTaskCreatePinnedToCore(rollingAvgTask, "rollingAvgTask", 4096, NULL, 1, NULL, 0);
-  xTaskCreatePinnedToCore(termTask, "terminalEmulator", 4096, NULL, 4, NULL, 0);  
+  xTaskCreatePinnedToCore(dnsServerTask, "dnsServerTask", 4096, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(rollingAvgTask, "rollingAvgTask", 4096, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(miyaShTask, "miyaguchiShell", 4096, NULL, 4, NULL, 1);  
 
   /* Set the LED low */
   pinMode(LED_PIN, OUTPUT);
@@ -125,16 +125,27 @@ void btnTask(void *pvParameter) {
   }
 }
 
-/* Terminal Task */
-void termTask(void *pvParameter) {
-  /* Setup the terminal */
-  Serial.println("\nBootup Complete. Initializing Terminal...");
-  term = new Terminal();
+
+// Shell Task
+void miyaShTask(void *pvParameter) {
+  MiyaSh sh;
   
-  /* Loop Task */
+  Serial.println("\nBootup Complete. Initializing shell..."); 
+  
+  sh.registerCmd("record", "SmartEgg", &recordCmd);
+  sh.registerCmd("setAPName", "SmartEgg", &setAPNameCmd);
+  sh.registerCmd("getAvgStr", "SmartEgg", &getAvgStrCmd);
+  sh.registerCmd("calibrate", "SmartEgg", &calibrateCmd);
+  sh.registerCmd("routeVRef", "SmartEgg", &routeVRefCmd);
+  sh.registerCmd("setVRef", "SmartEgg", &setVRefCmd);
+  sh.registerCmd("setVReg", "SmartEgg", &setVRegCmd);
+  
+  sh.begin();
+  
+  // Loop Task 
   for(;;) {
-    term->run();
-    vTaskDelay(500);
+    sh.run();
+    vTaskDelay(10);
   }
 }
 
@@ -164,6 +175,7 @@ void setupWebServer() {
   Serial.print("Mounting filesystem... ");
   if(!SPIFFS.begin(true)){
       Serial.println("SPIFFS Mount Failed!");
+      Serial.println("Did you remember to upload the SPIFFS partition?");
       return;
   } else {
     Serial.println("Done");

@@ -462,6 +462,13 @@ void DataRecorder::run() {
         m_freeAddress += 4;
       }
 
+      // Check for write buffer overflow
+      if(m_freeAddress - m_writeAddress > BUFFER_SIZE) {
+        Serial.println("FATAL: Write cache overflow!\nStopping Recording...");
+        recordStopHelper();
+        return;
+      }
+
       if(m_recNumSamples >= m_maxNumSamples){
         Serial.println("Exceeded max number of samples!");
         recordStopHelper(); /* Call the helper since requests are meant for CPU0 */

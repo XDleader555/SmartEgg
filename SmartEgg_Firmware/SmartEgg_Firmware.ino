@@ -42,13 +42,16 @@ void dnsServerTask(void *pvParameter);
 void miyaShTask(void *pvParameters);
 void rollingAvgTask(void *pvParameter);
 void btnTask(void *pvParameter);
+void btnPressCountTask(void *pvParameter);
 
 void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
 void setupWebServer();
 
-TaskHandle_t btnTaskHandle;
 void IRAM_ATTR btnFallingRoutine();
 volatile long btnTimer;
+volatile long btnPressCount;
+TaskHandle_t btnPressCountTaskHandle;
+#define btnPressCountTimeout 1000
 
 void setup() {
   /* Initialize serial communication at 115200 baud */
@@ -83,10 +86,13 @@ void IRAM_ATTR btnFallingRoutine() {
   /* debounce */
   if(millis() - btnTimer < 50)
     return;
-    
+
+  // Button press increment
+  btnPressCount ++;
+  
   btnTimer = millis();
   digitalWrite(LED_PIN, HIGH);
-  xTaskCreatePinnedToCore(btnTask, "btnTask", 4096, NULL, 1, &btnTaskHandle, 0);
+  xTaskCreatePinnedToCore(btnTask, "btnTask", 4096, NULL, 1, NULL, 0);
 }
 
 /* Button Task */
@@ -112,12 +118,17 @@ void btnTask(void *pvParameter) {
     }
   
     if(digitalRead(BTN_PIN) == HIGH) {
-      Serial.printf("Button held for %lums\n",millis() - btnTimer);
+      //Serial.printf("Button held for %lums\n",millis() - btnTimer);
 
       digitalWrite(LED_PIN, LOW);
 
-      /* Remove the task from the list and stop */
-      vTaskDelete(btnTaskHandle);
+      // Start btnPressTask
+      if(btnPressCountTaskHandle == NULL) {
+        xTaskCreatePinnedToCore(btnPressCountTask, "btnPressCountTask", 2048, NULL, 1, &btnPressCountTaskHandle, 0);
+      }
+
+      // Exit task
+      vTaskDelete(NULL);
       vTaskSuspend(NULL);
     }
 
@@ -125,6 +136,20 @@ void btnTask(void *pvParameter) {
   }
 }
 
+void btnPressCountTask(void *pvParameter) {
+  for(;;) {
+    if(millis() - btnTimer > btnPressCountTimeout) {
+      Serial.printf("Button Pressed %lu times\n", btnPressCount);
+      
+      // Exit task
+      btnPressCount = 0;
+      btnPressCountTaskHandle = NULL;
+      vTaskDelete(NULL);
+      vTaskSuspend(NULL);
+    }
+    vTaskDelay(10);
+  }
+}
 
 // Shell Task
 void miyaShTask(void *pvParameter) {

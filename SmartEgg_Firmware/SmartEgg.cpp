@@ -30,7 +30,7 @@ int SmartEgg::recordStart(String recName) {
 
   /* Start the task */
   Serial.println("Started writeTask");
-  xTaskCreatePinnedToCore(SMARTEGG.writeTask, "writeTask", 2048, NULL, 100, &writeTaskHandle, 0);
+  xTaskCreatePinnedToCore(SMARTEGG.writeTask, "writeTask", 2048, NULL, 4, &writeTaskHandle, 0);
 
   return ret;
 }

@@ -68,7 +68,7 @@ void setup() {
   /* Start CPU0 tasks, higher number means higher priority */
   xTaskCreatePinnedToCore(dnsServerTask, "dnsServerTask", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(rollingAvgTask, "rollingAvgTask", 4096, NULL, 1, NULL, 1);
-  xTaskCreatePinnedToCore(miyaShTask, "miyaguchiShell", 4096, NULL, 4, NULL, 1);  
+  xTaskCreatePinnedToCore(miyaShTask, "miyaguchiShell", 4096, NULL, 1, NULL, 1);
 
   /* Set the LED low */
   pinMode(LED_PIN, OUTPUT);

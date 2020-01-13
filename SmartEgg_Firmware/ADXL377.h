@@ -54,7 +54,7 @@ class ADXL377 {
     int m_rollingAvgIter;
     float m_offsets[3];
     float* m_rollingAvgBuffer[ROLLING_AVG_SIZE];            /* Holds values for the rolling avg */
-    bool m_calibrating, m_allowRolling;
+    bool m_calibrating, m_allowRolling, m_manualCal;
 
     float* getCalData();
 };

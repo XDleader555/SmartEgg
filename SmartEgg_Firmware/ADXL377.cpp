@@ -5,6 +5,7 @@ ADXL377::ADXL377(adc1_channel_t xPin, adc1_channel_t yPin, adc1_channel_t zPin, 
   m_rollingAvgIter = 0;
   m_calibrating = false;
   m_allowRolling = true;
+  m_manualCal = true;
 
   m_pins[0] = xPin;
   m_pins[1] = yPin;
@@ -33,9 +34,26 @@ ADXL377::ADXL377(adc1_channel_t xPin, adc1_channel_t yPin, adc1_channel_t zPin, 
   m_vRef = m_pref->getUInt("vRef", 1100);
   m_vReg = m_pref->getUInt("vReg", 3300);
   m_pref->end();
+
+  /* Check if the device is calibrated from the factory */
+  bool efuse_tp_present = esp_adc_cal_check_efuse(ESP_ADC_CAL_VAL_EFUSE_TP);
+  bool efuse_vref_present = esp_adc_cal_check_efuse(ESP_ADC_CAL_VAL_EFUSE_VREF );
+
+  Serial.printf("Factory Two Point Cal: %s\nFactory vRef: %s\n", efuse_tp_present ? "true" : "false", efuse_vref_present ? "true" : "false");
+
+  if(efuse_tp_present || efuse_vref_present) {
+    Serial.println("Factory calibration exists, disabling manual calibration.");
+    m_manualCal = false;
+  }
   
-  Serial.printf("Loaded ADXL377 Calibration Data x=%f, y=%f, z=%f vRef=%d vReg=%d\n",
-                          m_offsets[0], m_offsets[1], m_offsets[2], m_vRef, m_vReg);
+  Serial.printf("Loaded ADXL377 Calibration Data x=%f, y=%f, z=%f",
+                          m_offsets[0], m_offsets[1], m_offsets[2]);
+
+  if(m_manualCal) {
+    Serial.printf(", vRef=%d vReg=%d\n", m_vRef, m_vReg);
+  } else {
+    Serial.printf("\n");
+  }
 
   /* Setup ADC */
   adc1_config_width(ADC_WIDTH_12Bit);
@@ -94,12 +112,17 @@ float* ADXL377::read() {
   float* data = (float*) malloc(3 * sizeof(float));
   
   for (int i = 0; i < 3; i++) {
-    uint32_t calibratedRead = adc1_to_voltage(m_pins[i], &m_characteristics);
-    float mappedRead = mapf(calibratedRead, 0, m_vReg, 0, 4095);
-
+    float rawRead;
+    
+    if(m_manualCal) {
+      uint32_t calibratedRead = adc1_to_voltage(m_pins[i], &m_characteristics);
+      rawRead = mapf(calibratedRead, 0, m_vReg, 0, 4095);
+    } else {
+      rawRead = adc1_get_raw(m_pins[i]);
+    }
     //Serial.printf("ConvertedRead mv=%d analogVal=%d\n", calibratedRead, mappedRead);
     
-    data[i] = round(mappedRead - m_offsets[i]);
+    data[i] = round(rawRead - m_offsets[i]);
   }
 
   return data;

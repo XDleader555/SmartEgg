@@ -4,7 +4,7 @@ SmartEgg::SmartEgg() {
 }
 
 bool SmartEgg::begin() {
-  accel = new ADXL377(ADC1_CHANNEL_7, ADC1_CHANNEL_6, ADC1_CHANNEL_5, 39, 25, 26);
+  accel = new ADXL377(ADC1_CHANNEL_0, ADC1_CHANNEL_3, ADC1_CHANNEL_6, 25, 4, 5);
   dataRec = new DataRecorder(accel);
 
   m_pref = new Preferences();

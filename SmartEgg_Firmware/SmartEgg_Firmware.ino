@@ -29,7 +29,7 @@
 #include "Commands.h"
 
 #define DNS_PORT 53
-#define LED_PIN 5
+#define LED_PIN 13
 #define BTN_PIN 0
 
 DNSServer dnsServer;

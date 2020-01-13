@@ -318,7 +318,7 @@ void DataRecorder::recordStartHelper() {
   Serial.println("Done");
   
   /* Turn the LED on */
-  digitalWrite(5, HIGH);
+  digitalWrite(13, HIGH);
 
   /* Disable the rolling average */
   m_accel->disableRolling();

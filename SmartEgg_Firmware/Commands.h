@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <MiyaSh.h>
-#include <MiyaFunctions.h>
 #include "SmartEgg.h"
 
 inline void recordCmd(MiyaSh* shell, String args[], int arglen) {

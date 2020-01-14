@@ -43,23 +43,22 @@ ADXL377::ADXL377(adc1_channel_t xPin, adc1_channel_t yPin, adc1_channel_t zPin, 
 
   if(efuse_tp_present || efuse_vref_present) {
     Serial.println("Factory calibration exists, disabling manual calibration.");
+
+    /* Use nominal values */
+    m_vRef = 1100;
+    m_vReg = 3300;
     m_manualCal = false;
   }
   
-  Serial.printf("Loaded ADXL377 Calibration Data x=%f, y=%f, z=%f",
-                          m_offsets[0], m_offsets[1], m_offsets[2]);
-
-  if(m_manualCal) {
-    Serial.printf(", vRef=%d vReg=%d\n", m_vRef, m_vReg);
-  } else {
-    Serial.printf("\n");
-  }
+  Serial.printf("Loaded ADXL377 Calibration Data x=%f, y=%f, z=%f, vRef=%d vReg=%d\n",
+                          m_offsets[0], m_offsets[1], m_offsets[2], m_vRef, m_vReg);
 
   /* Setup ADC */
   adc1_config_width(ADC_WIDTH_12Bit);
   for(adc1_channel_t e:m_pins)
     adc1_config_channel_atten(e, ADC_ATTEN_11db);
-  esp_adc_cal_get_characteristics(m_vRef, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, &m_characteristics);
+
+  esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, m_vRef, &m_characteristics);
   
   /* Initialize the rolling average buffer */
   for(int i = 0; i < ROLLING_AVG_SIZE; i++)
@@ -84,6 +83,11 @@ ADXL377::ADXL377(adc1_channel_t xPin, adc1_channel_t yPin, adc1_channel_t zPin, 
 }
 
 void ADXL377::setVReg(int vReg) {
+  if(!m_manualCal) {
+    Serial.println("Unable to set vReg. Factory calibration exists.");
+    return;
+  }
+  
   Serial.printf("Adjusting vReg cal to %dmv", vReg);
   m_pref->begin("ADXL377", false);
   m_pref->putUInt("vReg", vReg);
@@ -93,13 +97,18 @@ void ADXL377::setVReg(int vReg) {
 }
 
 void ADXL377::setVRef(int vRef) {
+  if(!m_manualCal) {
+    Serial.println("Unable to set vRef. Factory calibration exists.");
+    return;
+  }
+  
   Serial.printf("Adjusting vRef cal to %dmv", vRef);
   m_pref->begin("ADXL377", false);
   m_pref->putUInt("vRef", vRef);
   m_pref->end();
 
   m_vRef = vRef;
-  esp_adc_cal_get_characteristics(m_vRef, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, &m_characteristics);
+  esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, m_vRef, &m_characteristics);
 }
 
 void ADXL377::run() {
@@ -112,17 +121,14 @@ float* ADXL377::read() {
   float* data = (float*) malloc(3 * sizeof(float));
   
   for (int i = 0; i < 3; i++) {
-    float rawRead;
+    uint32_t rawRead;
+    float mappedRead;
     
-    if(m_manualCal) {
-      uint32_t calibratedRead = adc1_to_voltage(m_pins[i], &m_characteristics);
-      rawRead = mapf(calibratedRead, 0, m_vReg, 0, 4095);
-    } else {
-      rawRead = adc1_get_raw(m_pins[i]);
-    }
+    esp_adc_cal_get_voltage((adc_channel_t) m_pins[i], &m_characteristics, &rawRead);
+    mappedRead = mapf(rawRead, 0, m_vReg, 0, 4095);
     //Serial.printf("ConvertedRead mv=%d analogVal=%d\n", calibratedRead, mappedRead);
     
-    data[i] = round(rawRead - m_offsets[i]);
+    data[i] = round(mappedRead - m_offsets[i]);
   }
 
   return data;
@@ -192,8 +198,8 @@ float* ADXL377::getCalData() {
   for(int i = 0; i < 3; i++)
     calData[i] = calData[i] - 2048;
 
-  /* Special Z offset */
-  calData[2] = calData[2] - (mapf(1, -200, 200, 0, 4095) - 2047.5);
+  /* Special Y offset */
+  calData[1] = calData[1] - (mapf(1, -200, 200, 0, 4095) - 2047.5);
 
   return calData;
 }

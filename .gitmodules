@@ -1,3 +1,9 @@
 [submodule "SmartEgg_Firmware/src/lib/CommonFunctions"]
 	path = SmartEgg_Firmware/src/lib/CommonFunctions
 	url = https://github.com/XDleader555/CommonFunctions
+[submodule "SmartEgg_Firmware/src/lib/AsyncTCP"]
+	path = SmartEgg_Firmware/src/lib/AsyncTCP
+	url = https://github.com/me-no-dev/AsyncTCP
+[submodule "SmartEgg_Firmware/src/lib/ESPAsyncWebServer"]
+	path = SmartEgg_Firmware/src/lib/ESPAsyncWebServer
+	url = https://github.com/me-no-dev/ESPAsyncWebServer

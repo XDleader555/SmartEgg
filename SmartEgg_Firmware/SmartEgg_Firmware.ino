@@ -19,8 +19,8 @@
 #include <driver/adc.h>
 #include <stdlib.h>
 #include <DNSServer.h>
-#include <AsyncTCP.h>
-#include <ESPAsyncWebServer.h>
+#include "src/lib/AsyncTCP/src/AsyncTCP.h"
+#include "src/lib/ESPAsyncWebServer/src/ESPAsyncWebServer.h"
 #include <MiyaSh.h>
 #include "SmartEgg.h"
 #include "ADXL377.h"

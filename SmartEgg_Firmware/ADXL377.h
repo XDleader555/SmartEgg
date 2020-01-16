@@ -24,7 +24,6 @@
 #include <Preferences.h>
 #include <driver/adc.h>
 #include <esp_adc_cal.h>
-#include <MiyaFunctions.h>
 
 #define ROLLING_AVG_SIZE 100 /* Size of the rolling average */
 

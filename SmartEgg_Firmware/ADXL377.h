@@ -20,6 +20,7 @@
 #define ADXL377_H
 
 #include "Arduino.h"
+#include "src/lib/CommonFunctions/mapf.h"
 #include <Preferences.h>
 #include <driver/adc.h>
 #include <esp_adc_cal.h>

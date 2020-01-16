@@ -1,4 +1,4 @@
-#include "SmartEgg.h"
+#include "../SmartEgg.h"
 
 SmartEgg::SmartEgg() {
 }

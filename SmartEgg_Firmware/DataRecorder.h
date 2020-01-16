@@ -22,6 +22,7 @@
 #include "Arduino.h"
 #include "EEPROM32.h"
 #include "ADXL377.h"
+#include "src/lib/CommonFunctions/mapf.h"
 #include <math.h>
 #include <Preferences.h>
 

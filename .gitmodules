@@ -1,0 +1,3 @@
+[submodule "SmartEgg_Firmware/src/lib/CommonFunctions"]
+	path = SmartEgg_Firmware/src/lib/CommonFunctions
+	url = https://github.com/XDleader555/CommonFunctions

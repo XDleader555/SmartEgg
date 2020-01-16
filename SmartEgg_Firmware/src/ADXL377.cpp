@@ -1,4 +1,4 @@
-#include "ADXL377.h"
+#include "../ADXL377.h"
 
 ADXL377::ADXL377(adc1_channel_t xPin, adc1_channel_t yPin, adc1_channel_t zPin, int stPin, int vccPin, int gndPin) {
   Serial.println("Initializing Accelerometer...");

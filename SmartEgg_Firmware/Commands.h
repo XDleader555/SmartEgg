@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <MiyaSh.h>
-#include <MiyaFunctions.h>
 #include "SmartEgg.h"
+#include "src/lib/CommonFunctions/containsint.h"
 
 inline void recordCmd(MiyaSh* shell, String args[], int arglen) {
   if(args[0] == "stop") {

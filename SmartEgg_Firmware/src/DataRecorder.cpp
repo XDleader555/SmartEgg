@@ -1,4 +1,4 @@
-#include "DataRecorder.h"
+#include "../DataRecorder.h"
 
 DataRecorder::DataRecorder(ADXL377* accel) {
   /* Setup local variables */

@@ -1,4 +1,4 @@
-#include "EEPROM32.h"
+#include "../EEPROM32.h"
 
 EEPROM32::EEPROM32(void) {
 }

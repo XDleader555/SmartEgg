@@ -1,4 +1,4 @@
-#include "../SmartEgg.h"
+#include "SmartEgg.h"
 
 SmartEgg::SmartEgg() {
 }
@@ -8,6 +8,7 @@ bool SmartEgg::begin() {
   dataRec = new DataRecorder(accel);
 
   m_pref = new Preferences();
+  return true;
 }
 
 void SmartEgg::setAPName(String name) {

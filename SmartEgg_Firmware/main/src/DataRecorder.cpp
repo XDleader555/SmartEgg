@@ -1,4 +1,4 @@
-#include "../DataRecorder.h"
+#include "DataRecorder.h"
 
 DataRecorder::DataRecorder(ADXL377* accel) {
   /* Setup local variables */
@@ -263,7 +263,7 @@ void DataRecorder::recordStartHelper() {
   unsigned long nextStartAddr = calcNextStartAddress(getNumRecordings() - 1);
   if(getSpaceLeft() < m_dataSize) {
     Serial.printf("Not enough space left! Need at least %luKB free (%luKB/%luKB Free)\n",
-                      m_dataSize/1024, getSpaceLeft()/1024, EEPROM_SIZE/1024);
+                      m_dataSize/1024, getSpaceLeft()/1024, EEPROM_SIZE/1024l);
     m_requestStatus = -1;
     return;
   }
@@ -355,7 +355,7 @@ void DataRecorder::recordStopHelper() {
   
   /* Stop recording */
   m_recFlag = false;
-  Serial.printf("Finished recording %d samples\n", m_recNumSamples);
+  Serial.printf("Finished recording %lu samples\n", m_recNumSamples);
   
   /* Flush the write buffer */
   flushInit = millis();
@@ -390,7 +390,7 @@ void DataRecorder::recordStopHelper() {
     Serial.printf("writeAddr: %lu freeAddr: %lu\n", m_writeAddress, m_freeAddress);
   }
   
-  Serial.printf("Done. Operation took %d ms\n", millis() - flushInit);
+  Serial.printf("Done. Operation took %lu ms\n", millis() - flushInit);
   
   /* Free up some ram */
   Serial.printf("Freeing %dKB write buffer\n", BUFFER_SIZE/1024);
@@ -487,7 +487,7 @@ void DataRecorder::run() {
       if(m_recNumSamples % 1000 == 0) {
         float timeRemaining = (m_dataSize / (3 * 2) - m_recNumSamples) * m_sampleRateMicros * pow(10,-6);
         
-        Serial.printf("Logged %d samples(%.3f seconds left) %d writes cached (%d bytes free)\n",
+        Serial.printf("Logged %lu samples(%.3f seconds left) %lu writes cached (%lu bytes free)\n",
                           m_recNumSamples, timeRemaining, m_freeAddress - m_writeAddress,
                           BUFFER_SIZE - (m_freeAddress - m_writeAddress));
       }
@@ -508,14 +508,14 @@ void DataRecorder::setSampleRate(int samplesPerSecond) {
 
 void DataRecorder::setRecordTime(long seconds) {
   m_maxNumSamples = seconds / (m_sampleRateMicros * pow(10,-6));
-  Serial.printf("Set log time to %d seconds (%d samples)\n", seconds, m_maxNumSamples);
+  Serial.printf("Set log time to %lu seconds (%lu samples)\n", seconds, m_maxNumSamples);
   /* 
    *  For info purposes 
    *  There are 3 points per sample, and 2 bytes per point
    */
   m_dataSize = EEPROM.align(6 * m_maxNumSamples);
 
-  Serial.printf("RawData is estimated to be %dKB\n", m_dataSize/1024);
+  Serial.printf("RawData is estimated to be %luKB\n", m_dataSize/1024l);
 }
 
 int DataRecorder::getRecordTime() {
@@ -715,7 +715,7 @@ String DataRecorder::getMagStr(String recName, unsigned long index) {
 /* This operation takes way too long */
 String DataRecorder::getMaxMag(String recName) {
   float maxMag;
-  unsigned long maxMagIndex;
+  long maxMagIndex;
   unsigned long startAddr;
   unsigned long numSamples;
   String rawPointStr = "";
@@ -728,6 +728,7 @@ String DataRecorder::getMaxMag(String recName) {
 
   /* Find the max magnitude */
   maxMag = 0;
+  maxMagIndex = -1;
   for(unsigned long j = 0; j < numSamples; j++) {
     /* Multiply by 6, since the starting address of each set is every 6th byte */
     float currMag = 0;
@@ -741,8 +742,10 @@ String DataRecorder::getMaxMag(String recName) {
     
     currMag = sqrt(currMag);
 
-    if(currMag > maxMag)
+    if(currMag > maxMag) {
       maxMag = currMag;
+      maxMagIndex = j;
+    }
   }
   /* Add time */
   rawPointStr += getTimeStr(maxMagIndex) + ",";
@@ -818,7 +821,7 @@ void DataRecorder::chunkedReadInit(String name, int readType) {
 
 int DataRecorder::chunkedRead(uint8_t *buffer, size_t maxLen, size_t index) {
   if(m_chunkedIter >= m_chunkedNumSamples) {
-    Serial.printf("Took %.2fs to send %luKB\n", ((float) (millis() - m_chunkedTimer))/1000, index/1024);
+    Serial.printf("Took %.2fs to send %luKB\n", ((float) (millis() - m_chunkedTimer))/1000l, index/1024l);
     return 0;
   }
 
@@ -833,7 +836,7 @@ int DataRecorder::chunkedRead(uint8_t *buffer, size_t maxLen, size_t index) {
 write:/* Buffer is full, copy what we need and trim it from the buffer for the next packet */
       String copyBuffer = m_chunkedBuffer.substring(0, maxLen);
       m_chunkedBuffer = m_chunkedBuffer.substring(maxLen);
-      Serial.printf("sending %d/%d, sent %lubytes and %lu samples\n",
+      Serial.printf("sending %d/%d, sent %dbytes and %lu samples\n",
                           strlen(copyBuffer.c_str()), maxLen, index, m_chunkedIter);
       strcpy((char*) buffer, copyBuffer.c_str());
       

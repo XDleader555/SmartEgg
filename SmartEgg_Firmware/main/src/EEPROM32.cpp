@@ -1,4 +1,4 @@
-#include "../EEPROM32.h"
+#include "EEPROM32.h"
 
 EEPROM32::EEPROM32(void) {
 }
@@ -11,6 +11,7 @@ bool EEPROM32::begin(unsigned long size) {
   }
 
   m_size = size;
+  return true;
 }
 
 uint8_t EEPROM32::read(unsigned long address) {

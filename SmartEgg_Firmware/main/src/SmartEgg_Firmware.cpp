@@ -29,6 +29,7 @@
 #include <DNSServer.h>
 #include <MiyaSh.h>
 
+#define RELEASE_VER "2.1"
 #define DNS_PORT 53
 #define LED_PIN 13
 #define BTN_PIN 0
@@ -341,6 +342,10 @@ void setupWebServer() {
 
   m_server.on("/functions/getAPName", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200, SMARTEGG.getAPName());
+  });
+
+  m_server.on("/functions/getVersion", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(200, RELEASE_VER);
   });
 
   m_server.on("/functions/reboot", HTTP_GET, [](AsyncWebServerRequest *request){

@@ -15,12 +15,20 @@ ADXL377::ADXL377(adc1_channel_t xPin, adc1_channel_t yPin, adc1_channel_t zPin, 
   m_vccPin = vccPin;
   m_gndPin = gndPin;
 
-  pinMode(m_stPin, OUTPUT);
-  pinMode(m_vccPin, OUTPUT);
-  pinMode(m_gndPin, OUTPUT);
-  digitalWrite(m_stPin, LOW);
-  digitalWrite(m_vccPin, HIGH);
-  digitalWrite(m_gndPin, LOW);
+  if(m_stPin != -1) {
+    pinMode(m_stPin, OUTPUT);
+    digitalWrite(m_stPin, LOW);
+  }
+
+  if(m_vccPin != -1) {
+    pinMode(m_vccPin, OUTPUT);
+    digitalWrite(m_vccPin, HIGH);
+  }
+  
+  if(m_gndPin != -1) {
+    pinMode(m_gndPin, OUTPUT);
+    digitalWrite(m_gndPin, LOW);
+  }
 
   /* Wait for the chip to turn on */
   delay(5);
@@ -66,20 +74,22 @@ ADXL377::ADXL377(adc1_channel_t xPin, adc1_channel_t yPin, adc1_channel_t zPin, 
 
 
   /* Self test */
-  float* st_tare = read();
-  digitalWrite(m_stPin, HIGH);
-  delay(1);
-  float* st = read();
-  digitalWrite(m_stPin, LOW);
-  
-  Serial.printf("Self Test x=%f, y=%f, z=%f\n",
-    mapf(st[0] - st_tare[0], 0, 4095, -200, 200),
-    mapf(st[1] - st_tare[1], 0, 4095, -200, 200),
-    mapf(st[2] - st_tare[2], 0, 4095, -200, 200)
-  );
-  
-  free(st_tare);
-  free(st);
+  if(m_stPin != -1) {
+    float* st_tare = read();
+    digitalWrite(m_stPin, HIGH);
+    delay(1);
+    float* st = read();
+    digitalWrite(m_stPin, LOW);
+    
+    Serial.printf("Self Test x=%f, y=%f, z=%f\n",
+      mapf(st[0] - st_tare[0], 0, 4095, -200, 200),
+      mapf(st[1] - st_tare[1], 0, 4095, -200, 200),
+      mapf(st[2] - st_tare[2], 0, 4095, -200, 200)
+    );
+    
+    free(st_tare);
+    free(st);
+  }
 }
 
 void ADXL377::setVReg(int vReg) {

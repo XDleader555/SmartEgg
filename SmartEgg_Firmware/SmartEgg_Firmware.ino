@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <DNSServer.h>
 #include <MiyaSh.h>
+#include <esp_bt.h>
 #include "src/lib/AsyncTCP/src/AsyncTCP.h"
 #include "src/lib/ESPAsyncWebServer/src/ESPAsyncWebServer.h"
 #include "SmartEgg.h"
@@ -58,6 +59,9 @@ void setup() {
   Serial.begin(115200);
   Serial.println("\nSerial Communications Begin...");
 
+  Serial.println("Reducing clock speed to 80Mhz");
+  setCpuFrequencyMhz(80);
+  
   /* Print current temperature */
   Serial.printf("Current Temperature: %.1f°F\n", temperatureRead());
   
@@ -209,8 +213,9 @@ void setupWebServer() {
 
   /* Start the WiFi Access Point */
   WiFi.mode(WIFI_AP);
-  WiFi.setSleep(false);
+  //WiFi.setSleep(false);
   WiFi.softAPsetHostname(SMARTEGG.getAPName().c_str());
+  //WiFi.setTxPower(WIFI_POWER_7dBm);
   WiFi.softAP(SMARTEGG.getAPName().c_str());
   
   Serial.print("Wireless AP Started: ");

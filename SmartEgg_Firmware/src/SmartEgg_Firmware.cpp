@@ -16,18 +16,19 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include <driver/adc.h>
-#include <stdlib.h>
-#include <DNSServer.h>
-#include <MiyaSh.h>
-#include <esp_bt.h>
-#include "src/lib/AsyncTCP/src/AsyncTCP.h"
-#include "src/lib/ESPAsyncWebServer/src/ESPAsyncWebServer.h"
+#include "Arduino.h"
+#include "AsyncTCP.h"
+#include "ESPAsyncWebServer.h"
 #include "SmartEgg.h"
 #include "ADXL377.h"
 #include "DataRecorder.h"
 #include "SPIFFS.h"
 #include "Commands.h"
+#include <driver/adc.h>
+#include <stdlib.h>
+#include <DNSServer.h>
+#include <MiyaSh.h>
+#include <esp_bt.h>
 
 #define DNS_PORT 53
 #define LED_PIN 13

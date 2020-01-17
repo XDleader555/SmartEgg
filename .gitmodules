@@ -1,9 +1,15 @@
-[submodule "SmartEgg_Firmware/src/lib/CommonFunctions"]
-	path = SmartEgg_Firmware/src/lib/CommonFunctions
-	url = https://github.com/XDleader555/CommonFunctions
-[submodule "SmartEgg_Firmware/src/lib/AsyncTCP"]
-	path = SmartEgg_Firmware/src/lib/AsyncTCP
-	url = https://github.com/me-no-dev/AsyncTCP
-[submodule "SmartEgg_Firmware/src/lib/ESPAsyncWebServer"]
-	path = SmartEgg_Firmware/src/lib/ESPAsyncWebServer
+[submodule "SmartEgg_Firmware/components/AsyncTCP"]
+	path = SmartEgg_Firmware/components/AsyncTCP
+	url = https://github.com/me-no-dev/AsyncTCP.git
+[submodule "SmartEgg_Firmware/components/ESPAsyncWebServer"]
+	path = SmartEgg_Firmware/components/ESPAsyncWebServer
 	url = https://github.com/me-no-dev/ESPAsyncWebServer
+[submodule "SmartEgg_Firmware/components/MiyaSh"]
+	path = SmartEgg_Firmware/components/MiyaSh
+	url = https://github.com/XDleader555/MiyaSh.git
+[submodule "SmartEgg_Firmware/components/CommonFunctions"]
+	path = SmartEgg_Firmware/components/CommonFunctions
+	url = https://github.com/XDleader555/CommonFunctions.git
+[submodule "SmartEgg_Firmware/components/arduino-esp32"]
+	path = SmartEgg_Firmware/components/arduino-esp32
+	url = https://github.com/espressif/arduino-esp32.git

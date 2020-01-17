@@ -25,6 +25,7 @@
 #include <mapf.h>
 #include <math.h>
 #include <Preferences.h>
+#include <esp_wifi.h>
 
 #define RECORD_TIME 60      /* record time */
 #define NUM_SAMPLES 1       /* how many samples to take when recording one value, usually 1 is enough */
@@ -44,6 +45,17 @@
 
 #define READ_AXES 1
 #define READ_MAGNITUDES 2
+
+inline void setApBeaconInterval(uint16_t ms) {
+  wifi_config_t conf_current;
+
+  Serial.printf("Setting AP beacon interval to %dms\n", ms);
+  esp_wifi_get_config(WIFI_IF_AP, &conf_current);
+  conf_current.ap.beacon_interval = ms;
+  if (esp_wifi_set_config(WIFI_IF_AP, &conf_current) != ESP_OK) {
+    Serial.println("Error adjusting AP beacon interval");
+  }
+}
 
 class DataRecorder {
   public:

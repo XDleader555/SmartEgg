@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <DNSServer.h>
 #include <MiyaSh.h>
-#include <esp_bt.h>
 
 #define DNS_PORT 53
 #define LED_PIN 13

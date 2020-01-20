@@ -324,7 +324,7 @@ void DataRecorder::recordStartHelper() {
   m_accel->disableRolling();
 
   /* Disable AP Beacon */
-  setApBeaconInterval(60000);
+  //setApBeaconInterval(60000);
 
   /* Setup recording */
   m_recTimerInit = micros();
@@ -404,7 +404,7 @@ void DataRecorder::recordStopHelper() {
   digitalWrite(13, LOW);
   
   /* Enable AP Beacon */
-  setApBeaconInterval(100);
+  //setApBeaconInterval(100);
 
   /* Re-Enable rolling average */
   m_accel->enableRolling();

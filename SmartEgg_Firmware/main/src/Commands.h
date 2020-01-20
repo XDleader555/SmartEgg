@@ -48,7 +48,7 @@ inline void recordCmd(MiyaSh* shell, String args[], int arglen) {
     Serial.println(F("stop: Ends a currently running recording"));
     Serial.println(F("list: Displays the names of currently saved recordings"));
     Serial.println(F("dump: Prints the saved data to the console"));
-    Serial.println(F("delete: Deletes a recording"));
+    Serial.println(F("delete: Deletes a recording (--all)"));
     Serial.println(F("setTime: Set the max recording time"));
     Serial.println(F("\nExample: record start myRecordingName"));
   }

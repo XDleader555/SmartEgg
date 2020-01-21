@@ -88,8 +88,8 @@ class DataRecorder {
     bool m_recFlag;                     /* Currently recording? */
     bool m_writeMutex;                  /* Locks the requests */
     int m_request, m_requestStatus;
-    long m_recTimerDelta;               /* Temporary varible, delta between records */
-    unsigned long m_recTimerInit;       /* How often we record */
+    int64_t m_recTimerDelta;               /* Temporary varible, delta between records */
+    int64_t m_recTimerInit;       /* How often we record */
     unsigned long m_recNumSamples;      /* What sample are we on, to ensure accuracy of the timer - has to be long*/
     unsigned long m_sampleRateMicros;   /* samples Per Micros - Has to be long, otherwise math will overflow*/
     unsigned long m_maxNumSamples;      /* Max numbers of samples to take */
@@ -106,6 +106,7 @@ class DataRecorder {
     void recordStartHelper();
     void recordStopHelper();
     void setSampleRate(int samplesPerSecond);
+    void setSampleRateMicros(unsigned long us);
     void bufferPush(byte val);
     void saveDataPoint(int* dataPoint);
 

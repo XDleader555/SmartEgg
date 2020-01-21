@@ -58,32 +58,38 @@ unsigned long DataRecorder::getSpaceLeft() {
 }
 
 bool DataRecorder::syncpll() {
-  int syncbuffer_size = 1000;
+  int syncbuffer_size = 100;
   int syncbuffer_iter;
   uint32_t** syncbuffer = (uint32_t**) malloc(syncbuffer_size * sizeof(uint32_t*));
   uint32_t* singleRead;
-  int64_t startTimer;
+  int64_t syncTimer;
+
+  /* Initialize the sync buffer */
+  for(int i = 0; i < syncbuffer_size; i++)
+    syncbuffer[i] = (uint32_t*) malloc(3 * sizeof(uint32_t));
 
   m_accel->disableRolling();
-  startTimer = esp_timer_get_time();
+  syncTimer = esp_timer_get_time();
   syncbuffer_iter = 0;
 
-  // Calibrate offsets. Sample at 1000hz
-  while(esp_timer_get_time() - startTimer > 1000) {
-    if(syncbuffer_iter == syncbuffer_size)
-      break;
+  printf("syncTimer: %llu\n", syncTimer);
 
-    singleRead = m_accel->readRaw();
-    memcpy(syncbuffer[syncbuffer_iter++], singleRead, 3 * sizeof(uint32_t));
-    free(singleRead);
+  // Calibrate offsets. Sample at 1000hz
+  while(true) {
+    if(esp_timer_get_time() - syncTimer > 1000) {
+      syncTimer = esp_timer_get_time();
+      if(syncbuffer_iter == syncbuffer_size)
+        break;
+
+      singleRead = m_accel->readRaw();
+      memcpy(syncbuffer[syncbuffer_iter++], singleRead, 3 * sizeof(uint32_t));
+      free(singleRead);
+    }
   }
 
   // Run some statistics, get rid of anything outside the standard deviation
   double offset_average = 0;
   double offset_stdev = 0;
-
-  double singleOffset;
-  double *rawOffsetTemp = (double*) malloc(3 * sizeof(double));
 
   // Get mean;
   for(int i = 0; i < syncbuffer_size; i ++)
@@ -164,7 +170,8 @@ bool DataRecorder::syncpll() {
   printf("PLL synced. Loop start: %llu; Loop Delta: %llu\n", m_apbeacon_pll_start, m_apbeacon_pll_delta);
 
   free(pll_buffer);
-  return true
+  m_accel->enableRolling();
+  return true;
 }
 
 int DataRecorder::getNumRecordings() {
@@ -362,6 +369,17 @@ void DataRecorder::recordStartHelper() {
     return;
   }
 
+  /* Sync AP beacon pll to reduce noise */
+  if(syncpll() == false) {
+    Serial.println("[FATAL] Unable to sync PLL, timeout occurred");
+    m_requestStatus = -1;
+    return;
+  }
+
+  /* Sync sample rate to AP beacon */
+  //int64_t minSampleRate = 1.0/REC_HZ * pow(10, 6);
+  
+
   /* Check the buffer, this case should never happen */
   if(m_writeBuffer != NULL) {
     Serial.println("[FATAL] Write buffer is still in use!");
@@ -427,8 +445,6 @@ void DataRecorder::recordStartHelper() {
   EEPROM.erase(m_writeAddress, m_dataSize);
   Serial.println("Done");
   
-  /* Turn the LED on */
-  digitalWrite(13, HIGH);
 
   /* Disable the rolling average */
   m_accel->disableRolling();
@@ -437,7 +453,7 @@ void DataRecorder::recordStartHelper() {
   //setApBeaconInterval(60000);
 
   /* Setup recording */
-  m_recTimerInit = micros();
+  m_recTimerInit = esp_timer_get_time();
   m_recNumSamples = 0;
   m_recFlag = true;
 
@@ -446,6 +462,9 @@ void DataRecorder::recordStartHelper() {
 
   /* Successfully started recording */
   Serial.println("Recording started");
+
+  /* Turn the LED on */
+  digitalWrite(13, HIGH);
   
   return;
 }
@@ -567,12 +586,12 @@ void DataRecorder::run() {
   /* Handle Recording */
   if(m_recFlag == true) {
     /* Lol don't fall victim to math errors, micros() returns an UNSIGNED long */
-    m_recTimerDelta = (micros() - m_recTimerInit) - (m_sampleRateMicros * m_recNumSamples);
+    m_recTimerDelta = (esp_timer_get_time() - m_recTimerInit) - (m_sampleRateMicros * m_recNumSamples);
     if(m_recTimerDelta > 0) {
       if(m_recTimerDelta > m_sampleRateMicros) {
         /* Uh oh, looks like our code is too slow to sample this fast. Better yell at your programmers */
-        Serial.printf("[WARNING] Missed Sample %lu! Code lagging by: %lums\n", m_recNumSamples, m_recTimerDelta/1024);
-        Serial.printf("[DEBUG] currTime: %lums m_sampleRateMicros: %lu\n", (micros() - m_recTimerInit)/1024, m_sampleRateMicros);
+        Serial.printf("[WARNING] Missed Sample %lu! Code lagging by: %llums\n", m_recNumSamples, m_recTimerDelta/1024);
+        Serial.printf("[DEBUG] currTime: %llums m_sampleRateMicros: %lu\n", (esp_timer_get_time() - m_recTimerInit)/1024, m_sampleRateMicros);
         m_recNumSamples += 4; /* Attempt to catch up */
         m_writeAddress += 4;
         m_freeAddress += 4;
@@ -620,6 +639,12 @@ void DataRecorder::setSampleRate(int samplesPerSecond) {
   Serial.print(" microseconds (");
   Serial.print(samplesPerSecond);
   Serial.println("Hz)");
+}
+
+void DataRecorder::setSampleRateMicros(unsigned long us) {
+  m_sampleRateMicros = us;
+  
+  printf("Setting sample rate to %lu\n", m_sampleRateMicros);
 }
 
 void DataRecorder::setRecordTime(long seconds) {

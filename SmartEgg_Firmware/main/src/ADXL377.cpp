@@ -131,7 +131,7 @@ uint32_t* ADXL377::readRaw() {
   uint32_t* rawdata = (uint32_t*) malloc(3 * sizeof(uint32_t));
   
   for (int i = 0; i < 3; i++)
-    esp_adc_cal_get_voltage((adc_channel_t) m_pins[i], &m_characteristics, &rawdata[i]);
+    esp_adc_cal_get_voltage((adc_channel_t) m_pins[i], &m_characteristics, &(rawdata[i]));
 
   return rawdata;
 }

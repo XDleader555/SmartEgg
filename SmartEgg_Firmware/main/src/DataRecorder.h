@@ -80,6 +80,7 @@ class DataRecorder {
     String getRecordingsList();
     unsigned long getSpaceLeft();
     String getMaxMag(String recName);
+    void syncpll();
 
   private:
     ADXL377* m_accel;                   /* Accelerometer reference */
@@ -95,7 +96,9 @@ class DataRecorder {
     unsigned long m_dataSize;           /* Size of the file in bytes */
     unsigned long m_writeAddress;       /* Current Buffer address we're writing to EERPROM*/
     unsigned long m_freeAddress;        /* Free EEPROM address */
-    Preferences* m_pref;                 /* Preferences variable */
+    Preferences* m_pref;                /* Preferences variable */
+    int64_t m_apbeacon_pll_start;       /* microseconds measurement when the first phase is detected */
+    int64_t m_apbeacon_pll_delta;       /* microsecond measurement between each phase */
 
     int request(int requestType);
     int returnPackedValue(unsigned long address);

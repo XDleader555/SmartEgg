@@ -57,6 +57,78 @@ unsigned long DataRecorder::getSpaceLeft() {
   return freeEEPROMSize ;
 }
 
+void DataRecorder::syncpll() {
+  int syncbuffer_size = 1000;
+  int syncbuffer_iter;
+  uint32_t** syncbuffer = (uint32_t**) malloc(syncbuffer_size * sizeof(uint32_t*));
+  uint32_t* singleRead;
+  int64_t startTimer;
+
+  m_accel->disableRolling();
+  startTimer = esp_timer_get_time();
+  syncbuffer_iter = 0;
+
+  // Calibrate offsets. Sample at 1000hz
+  while(esp_timer_get_time() - startTimer > 1000) {
+    if(syncbuffer_iter == syncbuffer_size)
+      break;
+
+    singleRead = m_accel->readRaw();
+    memcpy(syncbuffer[syncbuffer_iter++], singleRead, 3 * sizeof(uint32_t));
+    free(singleRead);
+  }
+
+  // Run some statistics, get rid of anything outside the standard deviation
+  double average = 0;
+  double stdev = 0;
+
+  double singleOffset;
+  double *rawOffsetTemp = (double*) malloc(3 * sizeof(double));
+
+  // Get mean;
+  for(int i = 0; i < syncbuffer_size; i ++)
+    average += ((double) (syncbuffer[i][0] +syncbuffer[i][1] + syncbuffer[i][2]))/3.0;
+
+  average /= syncbuffer_size;
+
+  // Get stdev
+  for(int i = 0; i < syncbuffer_size; i ++)
+    stdev = pow(((double) (syncbuffer[i][0] +syncbuffer[i][1] + syncbuffer[i][2]))/3.0 - average, 2.0);
+
+  stdev /= syncbuffer_size;
+  stdev = sqrt(stdev);
+
+  free(syncbuffer);
+
+  // Now that we have the average and stdev, we can search for the pll frequency
+  int pll_measurements_size = 10;
+  int pll_measurements_idx = 0;
+  m_apbeacon_pll_delta = 0;
+
+  double singleReadMagnitude;
+  while(pll_measurements_idx < pll_measurements_size) {
+    singleRead = m_accel->readRaw();
+    singleReadMagnitude = (singleRead[0] + singleRead[1] + singleRead[2])/3;
+    if(singleReadMagnitude > average + stdev || singleReadMagnitude < average - stdev) {
+      m_apbeacon_pll_delta += esp_timer_get_time();
+
+      // Get first measurement
+      if(pll_measurements_idx == 0)
+        m_apbeacon_pll_start = m_apbeacon_pll_delta;
+      
+      pll_measurements_idx++;
+    }
+  }
+
+  // Get the average phase delta
+  m_apbeacon_pll_delta /= pll_measurements_size;
+
+  //offset the phase by 1.5ms
+  m_apbeacon_pll_start += 1500;
+
+  printf("PLL synced. Loop start: %llu; Loop Delta: %llu\n", m_apbeacon_pll_start, m_apbeacon_pll_delta);
+}
+
 int DataRecorder::getNumRecordings() {
   int numRec = 0;
   for(int i = 0; i < m_recordings.length(); i ++)

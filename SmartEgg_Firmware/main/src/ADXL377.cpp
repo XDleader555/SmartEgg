@@ -127,21 +127,27 @@ void ADXL377::run() {
   }
 }
 
-float* ADXL377::read() {
-  float* data = (float*) malloc(3 * sizeof(float));
+uint32_t* ADXL377::readRaw() {
+  uint32_t* rawdata = (uint32_t*) malloc(3 * sizeof(uint32_t));
   
-  for (int i = 0; i < 3; i++) {
-    uint32_t rawRead;
-    float mappedRead;
-    
-    esp_adc_cal_get_voltage((adc_channel_t) m_pins[i], &m_characteristics, &rawRead);
-    mappedRead = mapf(rawRead, 0, m_vReg, 0, 4095);
-    //Serial.printf("ConvertedRead mv=%d analogVal=%d\n", calibratedRead, mappedRead);
-    
-    data[i] = round(mappedRead - m_offsets[i]);
-  }
+  for (int i = 0; i < 3; i++)
+    esp_adc_cal_get_voltage((adc_channel_t) m_pins[i], &m_characteristics, &rawdata[i]);
 
-  return data;
+  return rawdata;
+}
+
+float* ADXL377::read() {
+    float* data = (float*) malloc(3 * sizeof(float));
+    uint32_t* rawdata = readRaw();
+    
+    for (int i = 0; i < 3; i++) {
+      data[i] = mapf(rawdata[i], 0, m_vReg, 0, 4095);
+      data[i] = round(data[i] - m_offsets[i]);
+    }
+
+    free(rawdata);
+
+    return data;
 }
 
 int* ADXL377::readInt() {

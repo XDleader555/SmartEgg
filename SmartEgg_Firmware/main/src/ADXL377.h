@@ -39,6 +39,7 @@ class ADXL377 {
     void setVRef(int vRef);
     void setVReg(int vReg);
     float* read();
+    uint32_t* readRaw();
     int* readInt();
     float* getAvg();
 

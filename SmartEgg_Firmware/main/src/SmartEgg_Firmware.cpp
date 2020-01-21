@@ -169,6 +169,7 @@ void miyaShTask(void *pvParameter) {
   sh.registerCmd("routeVRef", "SmartEgg", &routeVRefCmd);
   sh.registerCmd("setVRef", "SmartEgg", &setVRefCmd);
   sh.registerCmd("setVReg", "SmartEgg", &setVRegCmd);
+  sh.registerCmd("printplldata", "SmartEgg", &printplldataCmd);
   
   sh.begin();
   

@@ -81,6 +81,7 @@ class DataRecorder {
     unsigned long getSpaceLeft();
     String getMaxMag(String recName);
     bool syncpll();
+    void printplldata();
 
   private:
     ADXL377* m_accel;                   /* Accelerometer reference */
@@ -99,6 +100,8 @@ class DataRecorder {
     Preferences* m_pref;                /* Preferences variable */
     int64_t m_apbeacon_pll_start;       /* microseconds measurement when the first phase is detected */
     int64_t m_apbeacon_pll_delta;       /* microsecond measurement between each phase */
+    double m_pll_delta_average;
+    double m_pll_delta_stdev;
 
     int request(int requestType);
     int returnPackedValue(unsigned long address);

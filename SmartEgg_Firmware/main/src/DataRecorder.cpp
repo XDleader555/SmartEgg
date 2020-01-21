@@ -57,6 +57,12 @@ unsigned long DataRecorder::getSpaceLeft() {
   return freeEEPROMSize ;
 }
 
+void DataRecorder::printplldata() {
+  printf("Loop start: %llu; Loop Delta: %llu\n", m_apbeacon_pll_start, m_apbeacon_pll_delta);
+  printf("pll delta average: %f; pll delta stdev: %f\n", m_pll_delta_average, m_pll_delta_stdev);
+  printf("sample rate: %lu\n", m_sampleRateMicros);
+}
+
 bool DataRecorder::syncpll() {
   int syncbuffer_size = 100;
   int syncbuffer_iter;
@@ -102,31 +108,48 @@ bool DataRecorder::syncpll() {
     offset_stdev = pow(((double) (syncbuffer[i][0] +syncbuffer[i][1] + syncbuffer[i][2]))/3.0 - offset_average, 2.0);
 
   offset_stdev /= syncbuffer_size;
-  offset_stdev = sqrt(offset_stdev);
+  offset_stdev = 100 + sqrt(offset_stdev);
 
   free(syncbuffer);
 
   printf("Offset average: %f; Offset stdev: %f\n", offset_average, offset_stdev);
 
   // Now that we have the average and stdev, we can search for the pll frequency
-  int pll_buffer_size = 10;
+  int pll_buffer_size = 15;
   int pll_buffer_idx = 0;
   int64_t* pll_buffer = (int64_t*) malloc(pll_buffer_size * sizeof(int64_t));
+  m_apbeacon_pll_start = 0;
   m_apbeacon_pll_delta = 0;
-  long timeoutTimer = millis();
+  int64_t timeoutTimer = esp_timer_get_time();
 
   double singleReadMagnitude;
+  bool phaseHigh = false;
+  bool valid;
+  syncTimer = esp_timer_get_time();
   while(pll_buffer_idx < pll_buffer_size) {
-    singleRead = m_accel->readRaw();
-    singleReadMagnitude = (singleRead[0] + singleRead[1] + singleRead[2])/3;
-    if(singleReadMagnitude > offset_average + offset_stdev || singleReadMagnitude < offset_average - offset_stdev) {
-      // Search for reads outside the standard deviation
-      pll_buffer[pll_buffer_idx++] = esp_timer_get_time();
+    if(esp_timer_get_time() - syncTimer > 500) {
+      syncTimer = esp_timer_get_time();
+      singleRead = m_accel->readRaw();
+      singleReadMagnitude = (singleRead[0] + singleRead[1] + singleRead[2])/3;
+
+      valid = singleReadMagnitude < offset_average + offset_stdev && singleReadMagnitude > offset_average - offset_stdev;
+      free(singleRead);
+
+      if(phaseHigh) {
+        // Wait for phase to exit
+        if(valid) {
+          phaseHigh = false;
+        }
+      } else if(!valid) {
+        // Search for reads outside the standard deviation
+        pll_buffer[pll_buffer_idx++] = esp_timer_get_time();
+        phaseHigh = true;
+      }
     }
 
-    if(millis() - timeoutTimer > 5000) {
+    if(esp_timer_get_time() - timeoutTimer > 3000000) {
       return false;
-      // timeout after 5 seconds
+      // timeout
     }
   }
 
@@ -134,31 +157,37 @@ bool DataRecorder::syncpll() {
   m_apbeacon_pll_start = pll_buffer[0] + 1500;
 
   // Get the phase deltas
-  for(int i = 1; i < pll_buffer_size; i ++) {
-    pll_buffer[i] = pll_buffer[i] - pll_buffer[0];
+  for(int i = pll_buffer_size - 1; i > 0; i --) {
+    pll_buffer[i] = pll_buffer[i] - pll_buffer[i-1];
   }
 
   // More stats
-  double pll_delta_average = 0;
-  double pll_delta_stdev = 0;
+  m_pll_delta_average = 0;
+  m_pll_delta_stdev = 0;
 
   for(int i = 1; i < pll_buffer_size; i ++) {
-    pll_delta_average += pll_buffer[i];
+    m_pll_delta_average += pll_buffer[i];
   }
-  pll_delta_average /= (pll_buffer_size - 1);
+  m_pll_delta_average /= (pll_buffer_size - 1);
 
   // Get pll delta stdev
   for(int i = 1; i < pll_buffer_size; i ++)
-    pll_delta_stdev = (int64_t) pow(pll_buffer[i] - pll_delta_average, 2.0);
+    m_pll_delta_stdev = (int64_t) pow(pll_buffer[i] - m_pll_delta_average, 2.0);
 
-  pll_delta_stdev /= pll_buffer_size;
-  pll_delta_stdev = sqrt(pll_delta_stdev);
+  m_pll_delta_stdev /= pll_buffer_size;
+  m_pll_delta_stdev = sqrt(m_pll_delta_stdev);
 
-  printf("PLL delta average: %f; PLL delta stdev: %f\n", pll_delta_average, pll_delta_stdev);
+  printf("PLL delta average: %f; PLL delta stdev: %f\n", m_pll_delta_average, m_pll_delta_stdev);
+
+  if(m_pll_delta_stdev > 5000) {
+    Serial.println("stdev too high!");
+    //m_apbeacon_pll_delta = -1;
+    return false;
+  }
 
   int pll_delta_valid_count = 0;
   for(int i = 1; i < pll_buffer_size; i ++) {
-    if(pll_buffer[i] > pll_delta_average + pll_delta_stdev || pll_buffer[i] < pll_delta_average - pll_delta_stdev)
+    if(pll_buffer[i] > m_pll_delta_average + m_pll_delta_stdev || pll_buffer[i] < m_pll_delta_average - m_pll_delta_stdev)
       continue;
     
     m_apbeacon_pll_delta += pll_buffer[i];
@@ -361,6 +390,8 @@ int DataRecorder::request(int requestType) {
  */
 void DataRecorder::recordStartHelper() {
   Serial.println("\nRecord request Acknowledged");
+  /* Turn the LED on */
+  digitalWrite(13, HIGH);
   
   /* If someone pressed the record button while we're already recording */
   if(m_recFlag) {
@@ -370,15 +401,28 @@ void DataRecorder::recordStartHelper() {
   }
 
   /* Sync AP beacon pll to reduce noise */
-  if(syncpll() == false) {
-    Serial.println("[FATAL] Unable to sync PLL, timeout occurred");
-    m_requestStatus = -1;
-    return;
-  }
 
-  /* Sync sample rate to AP beacon */
-  //int64_t minSampleRate = 1.0/REC_HZ * pow(10, 6);
-  
+  // bool synced = false;
+  // if(syncpll() == false) {
+  //   Serial.println("Unable to sync AP beacon PLL, timeout occurred");
+  //   setSampleRate(REC_HZ);
+  //   //m_requestStatus = -1;
+  //   //return;
+  // } else {
+  //   if(m_apbeacon_pll_delta > 150 || m_apbeacon_pll_delta < 50) {
+  //     Serial.print("PLL out of range");
+  //     setSampleRate(REC_HZ);
+  //   } else {
+  //     /* Set the sample rates */
+  //     float minratemicros = (long) (((float) 1/(float) REC_HZ) * pow(10,6));
+  //     float ratedivisor = 0.0;
+  //     while(((float) m_apbeacon_pll_delta)/ratedivisor > minratemicros) {
+  //       ratedivisor += 0.1;
+  //     }
+  //     setSampleRateMicros((unsigned long) ((float) m_apbeacon_pll_delta)/ratedivisor);
+  //     synced = true;
+  //   }
+  // }
 
   /* Check the buffer, this case should never happen */
   if(m_writeBuffer != NULL) {
@@ -452,8 +496,22 @@ void DataRecorder::recordStartHelper() {
   /* Disable AP Beacon */
   //setApBeaconInterval(60000);
 
-  /* Setup recording */
+
+  /* Calculate start time */
+  // if(synced) {
+  //   int64_t startTime = esp_timer_get_time();
+  //   int64_t syncDelta = startTime - m_apbeacon_pll_start;
+  //   //int64_t syncTime = syncDelta - syncDelta / m_apbeacon_pll_delta; // Sync the start time to the PLL loop
+  //   int64_t syncTime = 0;
+  //   int64_t startDelay = m_sampleRateMicros * 5; // delay start by delta to improve sync
+  //   m_recTimerInit = startTime + syncTime + startDelay;
+  // } else {
+  //   m_recTimerInit = esp_timer_get_time();
+  // }
+
   m_recTimerInit = esp_timer_get_time();
+
+  /* Setup recording */
   m_recNumSamples = 0;
   m_recFlag = true;
 
@@ -463,8 +521,6 @@ void DataRecorder::recordStartHelper() {
   /* Successfully started recording */
   Serial.println("Recording started");
 
-  /* Turn the LED on */
-  digitalWrite(13, HIGH);
   
   return;
 }
@@ -588,7 +644,7 @@ void DataRecorder::run() {
     /* Lol don't fall victim to math errors, micros() returns an UNSIGNED long */
     m_recTimerDelta = (esp_timer_get_time() - m_recTimerInit) - (m_sampleRateMicros * m_recNumSamples);
     if(m_recTimerDelta > 0) {
-      if(m_recTimerDelta > m_sampleRateMicros) {
+      if(m_recTimerDelta > m_sampleRateMicros && m_recNumSamples > 0) {
         /* Uh oh, looks like our code is too slow to sample this fast. Better yell at your programmers */
         Serial.printf("[WARNING] Missed Sample %lu! Code lagging by: %llums\n", m_recNumSamples, m_recTimerDelta/1024);
         Serial.printf("[DEBUG] currTime: %llums m_sampleRateMicros: %lu\n", (esp_timer_get_time() - m_recTimerInit)/1024, m_sampleRateMicros);

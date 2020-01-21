@@ -3,6 +3,9 @@
 #include "containsint.h"
 #include "SmartEgg.h"
 
+inline void printplldataCmd(MiyaSh* shell, String args[], int arglen) {
+  SMARTEGG.dataRec->printplldata();
+}
 inline void recordCmd(MiyaSh* shell, String args[], int arglen) {
   if(args[0] == "stop") {
     SMARTEGG.recordStop();

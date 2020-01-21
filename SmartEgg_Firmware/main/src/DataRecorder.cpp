@@ -57,7 +57,7 @@ unsigned long DataRecorder::getSpaceLeft() {
   return freeEEPROMSize ;
 }
 
-void DataRecorder::syncpll() {
+bool DataRecorder::syncpll() {
   int syncbuffer_size = 1000;
   int syncbuffer_iter;
   uint32_t** syncbuffer = (uint32_t**) malloc(syncbuffer_size * sizeof(uint32_t*));
@@ -79,54 +79,92 @@ void DataRecorder::syncpll() {
   }
 
   // Run some statistics, get rid of anything outside the standard deviation
-  double average = 0;
-  double stdev = 0;
+  double offset_average = 0;
+  double offset_stdev = 0;
 
   double singleOffset;
   double *rawOffsetTemp = (double*) malloc(3 * sizeof(double));
 
   // Get mean;
   for(int i = 0; i < syncbuffer_size; i ++)
-    average += ((double) (syncbuffer[i][0] +syncbuffer[i][1] + syncbuffer[i][2]))/3.0;
+    offset_average += ((double) (syncbuffer[i][0] +syncbuffer[i][1] + syncbuffer[i][2]))/3.0;
 
-  average /= syncbuffer_size;
+  offset_average /= syncbuffer_size;
 
   // Get stdev
   for(int i = 0; i < syncbuffer_size; i ++)
-    stdev = pow(((double) (syncbuffer[i][0] +syncbuffer[i][1] + syncbuffer[i][2]))/3.0 - average, 2.0);
+    offset_stdev = pow(((double) (syncbuffer[i][0] +syncbuffer[i][1] + syncbuffer[i][2]))/3.0 - offset_average, 2.0);
 
-  stdev /= syncbuffer_size;
-  stdev = sqrt(stdev);
+  offset_stdev /= syncbuffer_size;
+  offset_stdev = sqrt(offset_stdev);
 
   free(syncbuffer);
 
+  printf("Offset average: %f; Offset stdev: %f\n", offset_average, offset_stdev);
+
   // Now that we have the average and stdev, we can search for the pll frequency
-  int pll_measurements_size = 10;
-  int pll_measurements_idx = 0;
+  int pll_buffer_size = 10;
+  int pll_buffer_idx = 0;
+  int64_t* pll_buffer = (int64_t*) malloc(pll_buffer_size * sizeof(int64_t));
   m_apbeacon_pll_delta = 0;
+  long timeoutTimer = millis();
 
   double singleReadMagnitude;
-  while(pll_measurements_idx < pll_measurements_size) {
+  while(pll_buffer_idx < pll_buffer_size) {
     singleRead = m_accel->readRaw();
     singleReadMagnitude = (singleRead[0] + singleRead[1] + singleRead[2])/3;
-    if(singleReadMagnitude > average + stdev || singleReadMagnitude < average - stdev) {
-      m_apbeacon_pll_delta += esp_timer_get_time();
+    if(singleReadMagnitude > offset_average + offset_stdev || singleReadMagnitude < offset_average - offset_stdev) {
+      // Search for reads outside the standard deviation
+      pll_buffer[pll_buffer_idx++] = esp_timer_get_time();
+    }
 
-      // Get first measurement
-      if(pll_measurements_idx == 0)
-        m_apbeacon_pll_start = m_apbeacon_pll_delta;
-      
-      pll_measurements_idx++;
+    if(millis() - timeoutTimer > 5000) {
+      return false;
+      // timeout after 5 seconds
     }
   }
 
-  // Get the average phase delta
-  m_apbeacon_pll_delta /= pll_measurements_size;
-
   //offset the phase by 1.5ms
-  m_apbeacon_pll_start += 1500;
+  m_apbeacon_pll_start = pll_buffer[0] + 1500;
+
+  // Get the phase deltas
+  for(int i = 1; i < pll_buffer_size; i ++) {
+    pll_buffer[i] = pll_buffer[i] - pll_buffer[0];
+  }
+
+  // More stats
+  double pll_delta_average = 0;
+  double pll_delta_stdev = 0;
+
+  for(int i = 1; i < pll_buffer_size; i ++) {
+    pll_delta_average += pll_buffer[i];
+  }
+  pll_delta_average /= (pll_buffer_size - 1);
+
+  // Get pll delta stdev
+  for(int i = 1; i < pll_buffer_size; i ++)
+    pll_delta_stdev = (int64_t) pow(pll_buffer[i] - pll_delta_average, 2.0);
+
+  pll_delta_stdev /= pll_buffer_size;
+  pll_delta_stdev = sqrt(pll_delta_stdev);
+
+  printf("PLL delta average: %f; PLL delta stdev: %f\n", pll_delta_average, pll_delta_stdev);
+
+  int pll_delta_valid_count = 0;
+  for(int i = 1; i < pll_buffer_size; i ++) {
+    if(pll_buffer[i] > pll_delta_average + pll_delta_stdev || pll_buffer[i] < pll_delta_average - pll_delta_stdev)
+      continue;
+    
+    m_apbeacon_pll_delta += pll_buffer[i];
+    pll_delta_valid_count ++;
+  }
+
+  m_apbeacon_pll_delta /= pll_delta_valid_count;
 
   printf("PLL synced. Loop start: %llu; Loop Delta: %llu\n", m_apbeacon_pll_start, m_apbeacon_pll_delta);
+
+  free(pll_buffer);
+  return true
 }
 
 int DataRecorder::getNumRecordings() {

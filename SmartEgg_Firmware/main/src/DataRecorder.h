@@ -80,7 +80,7 @@ class DataRecorder {
     String getRecordingsList();
     unsigned long getSpaceLeft();
     String getMaxMag(String recName);
-    void syncpll();
+    bool syncpll();
 
   private:
     ADXL377* m_accel;                   /* Accelerometer reference */

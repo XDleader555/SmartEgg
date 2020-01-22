@@ -245,6 +245,9 @@ function LoadAllDropData(){
     {
       // Drop data exists locally
       curDrop.chartData = sessionDropData;
+
+      // Clear loading flag
+      curDrop.loading = false;
     } else {
       //no drop data exists, data is stored in order of drops so if drop n's data
       // doesn't exist then neither does n+1 .... Load the rest of the drop's data
@@ -264,7 +267,17 @@ function ajaxLoadAllDropData(drop, indexNum) {
     //Plot data
     let magnitudeData = parseDataMagnitude(data);
     drop.chartData = magnitudeData;
-    
+
+    // Clear loading flag
+    drop.loading = false;
+
+    // Show the data if it's currently selected
+    if(drop == m_DropDataList[m_activeDropIndex]) {
+      buildChart(drop.chartData);
+      $("#loading-div").hide();
+      $("#download-div").show();
+    }
+
     //Store data locally
     sessionStorage.setItem(drop.name, JSON.stringify(drop.chartData));
 
@@ -298,6 +311,9 @@ function ajaxUpdateDropList() {
         for(let i=0; i<dropNames.length; i++){
           // Add a drop and a tab with no data because it hasn't been pulled yet
           addDrop(dropNames[i], []);
+
+          // Set loading flag
+          m_DropDataList[i].loading = true;
         }
       }
     }).fail(function(jqXHR, textStatus, errorThrown) {
@@ -309,7 +325,7 @@ function ajaxUpdateDropList() {
 // Adds a drop to the drop list and the tabs
 function addDrop(dropName, data) {
   m_nextDropId += 1;
-  let eggDrop = {id: m_nextDropId, name: dropName, chartData: data };
+  let eggDrop = {id: m_nextDropId, name: dropName, chartData: data, loading: false };
   m_DropDataList.push(eggDrop);
   this.addTab(eggDrop.id, dropName);
 }
@@ -415,14 +431,20 @@ function newDataSelected(dropId){
     selectedData = m_DropDataList[curDropIndex].chartData;
 
     //Hide start button if the drop has already been recorded
-    if(selectedData.length == 0 ){
-      // No data has been cached for this drop
-      $("#record").show();
+    if(m_DropDataList[curDropIndex].loading == true) {
+      $("#loading-div").show();
       $("#download-div").hide();
+      $("#record").hide();
+    } else if (selectedData.length == 0){
+      // No data has been cached for this drop
+      $("#loading-div").hide();
+      $("#download-div").hide();
+      $("#record").show();
     } else {
       // Data has been recorded for this drop
-      $("#record").hide();
+      $("#loading-div").hide();
       $("#download-div").show();
+      $("#record").hide();
     }
     let currentChart = buildChart(selectedData)
 }

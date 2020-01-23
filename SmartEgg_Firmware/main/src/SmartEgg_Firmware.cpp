@@ -237,7 +237,7 @@ void setupWebServer() {
   m_server.on("/functions/disableWifi", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200);
     SMARTEGG.dataRec->disableWifi();
-  }
+  });
 
   m_server.on("/functions/recordStop", HTTP_GET, [](AsyncWebServerRequest *request){
     Serial.println("[WEBSERVER] recordStop");

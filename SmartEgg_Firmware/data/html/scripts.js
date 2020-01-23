@@ -75,7 +75,12 @@ function ajaxStartRecord(){
       }
       else
       {
-        // Record started, show stop button
+        // Record started
+        HTTPRequest(urlEndPoint+"/disableWifi", function(response) {
+          console.log("wifi disabled: " + response);
+        });
+
+        // show stop button
         $("#stop-div").show();
       }
   }).fail(function(jqXHR, textStatus, errorThrown) {

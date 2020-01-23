@@ -42,9 +42,12 @@
  * status of -1 means general error
  * status of -2 means timeout error
  */
-#define REQUEST_START 1
-#define REQUEST_END -1
-#define REQUEST_EMPTY 0
+
+enum {
+  REQUEST_START = 1,
+  REQUEST_END = -1,
+  REQUEST_EMPTY = 0
+};
 
 #define READ_AXES 1
 #define READ_MAGNITUDES 2

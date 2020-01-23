@@ -688,6 +688,11 @@ void DataRecorder::run() {
 
   /* Handle Recording */
   if(m_recFlag == true) {
+    // Wait for the start time to occur
+    if(m_recTimerInit > esp_timer_get_time()) {
+      return;
+    }
+
     /* Lol don't fall victim to math errors, micros() returns an UNSIGNED long */
     m_recTimerDelta = (esp_timer_get_time() - m_recTimerInit) - (m_sampleRateMicros * m_recNumSamples);
     if(m_recTimerDelta > 0) {
@@ -695,6 +700,7 @@ void DataRecorder::run() {
         /* Turn the LED on */
         digitalWrite(13, HIGH);
       }
+      
       if(m_recTimerDelta > m_sampleRateMicros && m_recNumSamples > 0) {
         /* Uh oh, looks like our code is too slow to sample this fast. Better yell at your programmers */
         Serial.printf("[WARNING] Missed Sample %lu! Code lagging by: %llums\n", m_recNumSamples, m_recTimerDelta/1024);

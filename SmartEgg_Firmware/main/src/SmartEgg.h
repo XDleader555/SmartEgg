@@ -28,12 +28,9 @@ class SmartEgg {
   public:
     SmartEgg();
     bool begin();
-    void setAPName(String name);
-    String getAPName();
     int recordStart(String recName);
     int recordStop();
     static void writeTask(void *pvParameters);
-    
     ADXL377* accel;
     DataRecorder* dataRec;
 

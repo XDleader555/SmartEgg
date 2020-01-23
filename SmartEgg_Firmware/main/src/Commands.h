@@ -3,6 +3,14 @@
 #include "containsint.h"
 #include "SmartEgg.h"
 
+inline void startWifiCmd(MiyaSh* shell, String args[], int arglen) {
+  SMARTEGG.dataRec->setupWifi();
+}
+
+inline void stopWifiCmd(MiyaSh* shell, String args[], int arglen) {
+  SMARTEGG.dataRec->disableWifi();
+}
+
 inline void printplldataCmd(MiyaSh* shell, String args[], int arglen) {
   SMARTEGG.dataRec->printplldata();
 }
@@ -64,7 +72,7 @@ inline void setAPNameCmd(MiyaSh* shell, String args[], int arglen) {
     for(int i = 0; i < arglen; i++)
       apName += String(args[i]) + " ";
     apName.trim();
-    SMARTEGG.setAPName(apName);
+    SMARTEGG.dataRec->setAPName(apName);
   } else {
     Serial.println(F("Please specify a WiFi access point name!"));
   }

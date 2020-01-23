@@ -19,11 +19,10 @@
 #include "Arduino.h"
 #include "AsyncTCP.h"
 #include "ESPAsyncWebServer.h"
+#include "Commands.h"
 #include "SmartEgg.h"
 #include "ADXL377.h"
-#include "DataRecorder.h"
 #include "SPIFFS.h"
-#include "Commands.h"
 #include <driver/adc.h>
 #include <stdlib.h>
 #include <DNSServer.h>
@@ -54,6 +53,8 @@ volatile long btnTimer;
 volatile long btnPressCount;
 TaskHandle_t btnPressCountTaskHandle;
 #define btnPressCountTimeout 1000
+
+
 
 void setup() {
   /* Initialize serial communication at 115200 baud */
@@ -170,6 +171,8 @@ void miyaShTask(void *pvParameter) {
   sh.registerCmd("setVRef", "SmartEgg", &setVRefCmd);
   sh.registerCmd("setVReg", "SmartEgg", &setVRegCmd);
   sh.registerCmd("printplldata", "SmartEgg", &printplldataCmd);
+  sh.registerCmd("stopWifi", "SmartEgg", &stopWifiCmd);
+  sh.registerCmd("startWifi", "SmartEgg", &startWifiCmd);
   
   sh.begin();
   
@@ -213,17 +216,7 @@ void setupWebServer() {
     Serial.printf("%dKB used out of %dKB\n", SPIFFS.usedBytes()/1024, SPIFFS.totalBytes()/1024);
   }
 
-  /* Start the WiFi Access Point */
-  WiFi.mode(WIFI_AP);
-  WiFi.setSleep(false);
-  WiFi.softAPsetHostname(SMARTEGG.getAPName().c_str());
-  //WiFi.setTxPower(WIFI_POWER_7dBm);
-  WiFi.softAP(SMARTEGG.getAPName().c_str());
-  
-  Serial.print("Wireless AP Started: ");
-  Serial.println(SMARTEGG.getAPName().c_str());
-  Serial.print("Local IP address: ");
-  Serial.println(WiFi.softAPIP());
+  SMARTEGG.dataRec->setupWifi();
 
   /* Setup the WebServer */
   m_server.serveStatic("/", SPIFFS, "/html/").setDefaultFile("index.html");
@@ -239,6 +232,9 @@ void setupWebServer() {
     
     int resp = SMARTEGG.recordStart(recName);
     request->send(200, "text/plain", String(resp));
+    
+    /* Disable wifi after sending the response*/
+    SMARTEGG.dataRec->disableWifi();
   });
 
   m_server.on("/functions/recordStop", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -336,13 +332,13 @@ void setupWebServer() {
   m_server.on("/functions/setAPName", HTTP_GET, [](AsyncWebServerRequest *request){
     String apName = request->url().substring(String("/functions/setAPName/").length());
     Serial.printf("Requested to set APName to \"%s\"\n", apName.c_str());
-    SMARTEGG.setAPName(apName);
+    SMARTEGG.dataRec->setAPName(apName);
     
     request->send(200);
   });
 
   m_server.on("/functions/getAPName", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(200, SMARTEGG.getAPName());
+    request->send(200, SMARTEGG.dataRec->getAPName());
   });
 
   m_server.on("/functions/getVersion", HTTP_GET, [](AsyncWebServerRequest *request){

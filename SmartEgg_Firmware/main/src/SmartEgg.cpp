@@ -11,18 +11,7 @@ bool SmartEgg::begin() {
   return true;
 }
 
-void SmartEgg::setAPName(String name) {
-  if(name.charAt(0) == '"')
-    name = name.substring(1);
-  if(name.charAt(name.length() - 1) == '"')
-    name = name.substring(0, name.length() - 1);
-  
-  m_pref->begin("SmartEgg", false);
-  m_pref->putString("APName", name);
-  m_pref->end();
 
-  Serial.printf("Set AP Name to %s. Please reboot for changes to take effect.\n", name.c_str());
-}
 
 int SmartEgg::recordStart(String recName) {
   int ret = dataRec->recordStart(recName);
@@ -46,14 +35,7 @@ int SmartEgg::recordStop() {
   return ret;  
 }
 
-String SmartEgg::getAPName() {
-  String APName;
-  m_pref->begin("SmartEgg", false);
-  APName = m_pref->getString("APName", "Nameless SmartEgg");
-  m_pref->end();
 
-  return APName;
-}
 
 void SmartEgg::writeTask(void *pvParameter) {
   /* Loop Task */

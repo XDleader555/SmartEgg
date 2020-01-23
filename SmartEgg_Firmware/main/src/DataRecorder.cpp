@@ -57,6 +57,52 @@ unsigned long DataRecorder::getSpaceLeft() {
   return freeEEPROMSize ;
 }
 
+void DataRecorder::setAPName(String name) {
+  if(name.charAt(0) == '"')
+    name = name.substring(1);
+  if(name.charAt(name.length() - 1) == '"')
+    name = name.substring(0, name.length() - 1);
+  
+  m_pref->begin("SmartEgg", false);
+  m_pref->putString("APName", name);
+  m_pref->end();
+
+  Serial.printf("Set AP Name to %s. Please reboot for changes to take effect.\n", name.c_str());
+}
+
+String DataRecorder::getAPName() {
+  String APName;
+  m_pref->begin("SmartEgg", false);
+  APName = m_pref->getString("APName", "Nameless SmartEgg");
+  m_pref->end();
+
+  return APName;
+}
+
+void DataRecorder::setupWifi() {
+  /* Start the WiFi Access Point */
+  WiFi.mode(WIFI_AP);
+  WiFi.setSleep(false);
+  WiFi.softAPsetHostname(getAPName().c_str());
+  //WiFi.setTxPower(WIFI_POWER_7dBm);
+  WiFi.softAP(getAPName().c_str());
+  
+  Serial.print("Wireless AP Started: ");
+  Serial.println(getAPName().c_str());
+  Serial.print("Local IP address: ");
+  Serial.println(WiFi.softAPIP());
+}
+
+void DataRecorder::disableWifi() {
+  WiFi.softAPdisconnect();
+  if(esp_wifi_stop() != ESP_OK) {
+    Serial.println("Error disabling wifi");
+  } else {
+    Serial.println("Disconnected AP");
+  }
+}
+
+
 void DataRecorder::printplldata() {
   printf("Loop start: %llu; Loop Delta: %llu\n", m_apbeacon_pll_start, m_apbeacon_pll_delta);
   printf("pll delta average: %f; pll delta stdev: %f\n", m_pll_delta_average, m_pll_delta_stdev);
@@ -390,8 +436,6 @@ int DataRecorder::request(int requestType) {
  */
 void DataRecorder::recordStartHelper() {
   Serial.println("\nRecord request Acknowledged");
-  /* Turn the LED on */
-  digitalWrite(13, HIGH);
   
   /* If someone pressed the record button while we're already recording */
   if(m_recFlag) {
@@ -423,6 +467,7 @@ void DataRecorder::recordStartHelper() {
   //     synced = true;
   //   }
   // }
+  
 
   /* Check the buffer, this case should never happen */
   if(m_writeBuffer != NULL) {
@@ -509,7 +554,7 @@ void DataRecorder::recordStartHelper() {
   //   m_recTimerInit = esp_timer_get_time();
   // }
 
-  m_recTimerInit = esp_timer_get_time();
+  m_recTimerInit = esp_timer_get_time() + m_sampleRateMicros * 5; // delay start to improve data capture
 
   /* Setup recording */
   m_recNumSamples = 0;
@@ -529,6 +574,7 @@ void DataRecorder::recordStartHelper() {
 void DataRecorder::recordStopHelper() {
   unsigned long checkMutexTimer;
   unsigned long flushInit;
+  
 
   if(m_requestStatus == -3) {
     return;
@@ -590,6 +636,7 @@ void DataRecorder::recordStopHelper() {
   
   /* Enable AP Beacon */
   //setApBeaconInterval(100);
+  setupWifi();
 
   /* Re-Enable rolling average */
   m_accel->enableRolling();
@@ -644,6 +691,10 @@ void DataRecorder::run() {
     /* Lol don't fall victim to math errors, micros() returns an UNSIGNED long */
     m_recTimerDelta = (esp_timer_get_time() - m_recTimerInit) - (m_sampleRateMicros * m_recNumSamples);
     if(m_recTimerDelta > 0) {
+      if(m_recNumSamples == 0) {
+        /* Turn the LED on */
+        digitalWrite(13, HIGH);
+      }
       if(m_recTimerDelta > m_sampleRateMicros && m_recNumSamples > 0) {
         /* Uh oh, looks like our code is too slow to sample this fast. Better yell at your programmers */
         Serial.printf("[WARNING] Missed Sample %lu! Code lagging by: %llums\n", m_recNumSamples, m_recTimerDelta/1024);

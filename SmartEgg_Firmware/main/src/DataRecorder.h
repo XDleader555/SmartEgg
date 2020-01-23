@@ -26,8 +26,11 @@
 #include <math.h>
 #include <Preferences.h>
 #include <esp_wifi.h>
+#include "wifi.h"
+#include "esp_wifi.h"
 
-#define RECORD_TIME 60      /* record time */
+
+#define RECORD_TIME 15      /* record time */
 #define NUM_SAMPLES 1       /* how many samples to take when recording one value, usually 1 is enough */
 #define REC_HZ 500          /* Samples per second */
 #define EEPROM_SIZE 512000  /* Size of the EEPROM */
@@ -82,6 +85,10 @@ class DataRecorder {
     String getMaxMag(String recName);
     bool syncpll();
     void printplldata();
+    void setupWifi();
+    void disableWifi();
+    void setAPName(String name);
+    String getAPName();
 
   private:
     ADXL377* m_accel;                   /* Accelerometer reference */
@@ -102,6 +109,7 @@ class DataRecorder {
     int64_t m_apbeacon_pll_delta;       /* microsecond measurement between each phase */
     double m_pll_delta_average;
     double m_pll_delta_stdev;
+    esp_adc_cal_characteristics_t m_battChar;
 
     int request(int requestType);
     int returnPackedValue(unsigned long address);

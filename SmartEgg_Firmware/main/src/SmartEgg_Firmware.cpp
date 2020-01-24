@@ -72,10 +72,10 @@ void setup() {
   setupWebServer();
   
   /* Setup DNS Server to redirect user to main page */
-  dnsServer.start(DNS_PORT, "ngcsmart.egg", WiFi.softAPIP());
+  //dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
   
   /* Start CPU0 tasks, higher number means higher priority */
-  xTaskCreatePinnedToCore(dnsServerTask, "dnsServerTask", 4096, NULL, 1, NULL, 1);
+  //xTaskCreatePinnedToCore(dnsServerTask, "dnsServerTask", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(rollingAvgTask, "rollingAvgTask", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(miyaShTask, "miyaguchiShell", 4096, NULL, 1, NULL, 1);
 
@@ -179,7 +179,7 @@ void miyaShTask(void *pvParameter) {
   // Loop Task 
   for(;;) {
     sh.run();
-    vTaskDelay(10);
+    vTaskDelay(100);
   }
 }
 
@@ -187,7 +187,7 @@ void rollingAvgTask(void *pvParameter) {
   /* Loop Task */
   for(;;) {
     SMARTEGG.accel->updateAvg();
-    vTaskDelay(50);
+    vTaskDelay(100);
   }
 }
 
@@ -195,7 +195,7 @@ void dnsServerTask(void *pvParameter) {
   /* Loop Task */
   for(;;) {
     dnsServer.processNextRequest();
-    vTaskDelay(500);
+    vTaskDelay(300);
   }
 }
 
@@ -353,6 +353,14 @@ void setupWebServer() {
     Serial.println("Going for a restart...");
     delay(100);
     esp_restart();
+  });
+
+  m_server.on("/generate_204", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(204);
+  });
+
+  m_server.on("/gen_204", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(204);
   });
 
   /* Handle 404 */

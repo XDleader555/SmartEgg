@@ -369,7 +369,7 @@ void DataRecorder::recordStartHelper() {
   /* Disable the rolling average */
   m_accel->disableRolling();
 
-  m_recTimerInit = esp_timer_get_time() + m_sampleRateMicros * 5; // delay start to improve data capture
+  m_recTimerInit = esp_timer_get_time() + 1*(1000*1000); // delay start to improve data capture
 
   /* Setup recording */
   m_recNumSamples = 0;
@@ -406,6 +406,7 @@ void DataRecorder::recordStopHelper() {
   m_recFlag = false;
   Serial.printf("Finished recording %llu samples\n", m_recNumSamples);
   
+
   /* Flush the write buffer */
   flushInit = millis();
   Serial.printf("Flushing %lu Writes...", m_freeAddress - m_writeAddress);
@@ -446,8 +447,9 @@ void DataRecorder::recordStopHelper() {
   free(m_writeBuffer);
   m_writeBuffer = NULL;
   
-  /* Turn LED off */
-  digitalWrite(13, LOW);
+  /* Turn LED on */
+  vTaskDelete(ledTaskHandle);
+  digitalWrite(13, HIGH);
   
   /* Enable AP Beacon */
   //setApBeaconInterval(100);
@@ -512,7 +514,7 @@ void DataRecorder::run() {
     if(m_recTimerDelta > 0) {
       if(m_recNumSamples == 0) {
         /* Turn the LED on */
-        digitalWrite(13, HIGH);
+        xTaskCreatePinnedToCore(ledTask, "ledTask", 2048, NULL, 3, &ledTaskHandle, 1);
       }
       
       if(m_recTimerDelta > m_sampleRateMicros && m_recNumSamples > 0) {

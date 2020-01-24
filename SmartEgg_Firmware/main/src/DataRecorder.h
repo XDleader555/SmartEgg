@@ -52,6 +52,16 @@ enum {
 #define READ_AXES 1
 #define READ_MAGNITUDES 2
 
+inline void ledTask(void *pvParameter) {
+  bool ledState = true;
+
+  for(;;) {
+    ledState = !ledState;
+    digitalWrite(13, ledState);
+    vTaskDelay(500);
+  }
+}
+
 class DataRecorder {
   public:
     DataRecorder(ADXL377* accel);
@@ -106,6 +116,9 @@ class DataRecorder {
     void setSampleRateMicros(unsigned long us);
     void bufferPush(byte val);
     void saveDataPoint(int* dataPoint);
+
+    // LED stuff
+    TaskHandle_t ledTaskHandle;
 
     /* Saved recordings */
     String m_currRecording;

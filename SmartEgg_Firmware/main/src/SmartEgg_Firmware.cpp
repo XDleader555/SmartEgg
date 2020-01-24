@@ -42,8 +42,6 @@ void webServerTask(void *pvParameters);
 void dnsServerTask(void *pvParameter);
 void miyaShTask(void *pvParameters);
 void rollingAvgTask(void *pvParameter);
-void btnTask(void *pvParameter);
-void btnPressCountTask(void *pvParameter);
 
 void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
 void setupWebServer();
@@ -72,9 +70,9 @@ void setup() {
   xTaskCreatePinnedToCore(rollingAvgTask, "rollingAvgTask", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(miyaShTask, "miyaguchiShell", 4096, NULL, 1, NULL, 1);
 
-  /* Set the LED low */
+  /* Set the LED HIGH */
   pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, LOW);
+  digitalWrite(LED_PIN, HIGH);
 }
 
 // Shell Task

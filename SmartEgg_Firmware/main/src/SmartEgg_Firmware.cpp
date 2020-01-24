@@ -28,7 +28,7 @@
 #include <DNSServer.h>
 #include <MiyaSh.h>
 
-#define RELEASE_VER "2.1"
+#define RELEASE_VER "2.1.2"
 #define DNS_PORT 53
 #define LED_PIN 13
 #define BTN_PIN 0

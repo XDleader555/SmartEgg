@@ -72,10 +72,10 @@ void setup() {
   setupWebServer();
   
   /* Setup DNS Server to redirect user to main page */
-  //dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
+  dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
   
   /* Start CPU0 tasks, higher number means higher priority */
-  //xTaskCreatePinnedToCore(dnsServerTask, "dnsServerTask", 4096, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(dnsServerTask, "dnsServerTask", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(rollingAvgTask, "rollingAvgTask", 4096, NULL, 1, NULL, 1);
   xTaskCreatePinnedToCore(miyaShTask, "miyaguchiShell", 4096, NULL, 1, NULL, 1);
 

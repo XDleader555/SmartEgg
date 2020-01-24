@@ -25,8 +25,8 @@ $(document).ready(function() {
     $("#my-modal").hide();
 
   // $("#main-content").hide();
+  getVersion();
 	updateDropList();
-
 });
 
 // Start the recording action and toggle the appropriate areas
@@ -325,6 +325,19 @@ function ajaxUpdateDropList() {
       // If fail
       console.log(textStatus + ': ' + errorThrown);
     });
+}
+
+function getVersion() {
+  let requestStr = urlEndPoint+"/getVersion"
+  return  $.ajax({
+    dataType: 'text',
+    url: requestStr
+  }).done(function(response) {
+    document.getElementById("ver").innerHTML = "SmartEgg Version: " + response;
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    // If fail
+    console.log(textStatus + ': ' + errorThrown);
+  });
 }
 
 // Adds a drop to the drop list and the tabs

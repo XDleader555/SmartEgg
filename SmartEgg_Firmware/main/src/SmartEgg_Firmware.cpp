@@ -260,7 +260,7 @@ void setupWebServer() {
   });
 
   m_server.on("/functions/getVersion", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(200, RELEASE_VER);
+    request->send(200, "text/plain", RELEASE_VER);
   });
 
   m_server.on("/functions/reboot", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -280,7 +280,11 @@ void setupWebServer() {
   });
 
   m_server.on("/connecttest.txt", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(200, "Microsoft Connect Test");
+    request->send(200, "text/plain", "Microsoft Connect Test");
+  });
+
+  m_server.on("/redirect", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->redirect("/master-controller.html");
   });
 
   /* Handle 404 */

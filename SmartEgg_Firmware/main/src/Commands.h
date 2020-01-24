@@ -11,9 +11,6 @@ inline void stopWifiCmd(MiyaSh* shell, String args[], int arglen) {
   SMARTEGG.dataRec->disableWifi();
 }
 
-inline void printplldataCmd(MiyaSh* shell, String args[], int arglen) {
-  SMARTEGG.dataRec->printplldata();
-}
 inline void recordCmd(MiyaSh* shell, String args[], int arglen) {
   if(args[0] == "stop") {
     SMARTEGG.recordStop();

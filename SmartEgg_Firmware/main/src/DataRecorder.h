@@ -52,17 +52,6 @@ enum {
 #define READ_AXES 1
 #define READ_MAGNITUDES 2
 
-inline void setApBeaconInterval(uint16_t ms) {
-  wifi_config_t conf_current;
-
-  Serial.printf("Setting AP beacon interval to %dms\n", ms);
-  esp_wifi_get_config(WIFI_IF_AP, &conf_current);
-  conf_current.ap.beacon_interval = ms;
-  if (esp_wifi_set_config(WIFI_IF_AP, &conf_current) != ESP_OK) {
-    Serial.println("Error adjusting AP beacon interval");
-  }
-}
-
 class DataRecorder {
   public:
     DataRecorder(ADXL377* accel);
@@ -86,8 +75,6 @@ class DataRecorder {
     String getRecordingsList();
     unsigned long getSpaceLeft();
     String getMaxMag(String recName);
-    bool syncpll();
-    void printplldata();
     void setupWifi();
     void disableWifi();
     void setAPName(String name);
@@ -99,8 +86,8 @@ class DataRecorder {
     bool m_recFlag;                     /* Currently recording? */
     bool m_writeMutex;                  /* Locks the requests */
     int m_request, m_requestStatus;
-    int64_t m_recTimerDelta;               /* Temporary varible, delta between records */
-    int64_t m_recTimerInit;       /* How often we record */
+    unsigned long m_recTimerDelta;               /* Temporary varible, delta between records */
+    unsigned long m_recTimerInit;       /* How often we record */
     unsigned long m_recNumSamples;      /* What sample are we on, to ensure accuracy of the timer - has to be long*/
     unsigned long m_sampleRateMicros;   /* samples Per Micros - Has to be long, otherwise math will overflow*/
     unsigned long m_maxNumSamples;      /* Max numbers of samples to take */
@@ -108,10 +95,6 @@ class DataRecorder {
     unsigned long m_writeAddress;       /* Current Buffer address we're writing to EERPROM*/
     unsigned long m_freeAddress;        /* Free EEPROM address */
     Preferences* m_pref;                /* Preferences variable */
-    int64_t m_apbeacon_pll_start;       /* microseconds measurement when the first phase is detected */
-    int64_t m_apbeacon_pll_delta;       /* microsecond measurement between each phase */
-    double m_pll_delta_average;
-    double m_pll_delta_stdev;
     esp_adc_cal_characteristics_t m_battChar;
 
     int request(int requestType);

@@ -48,14 +48,6 @@ void btnPressCountTask(void *pvParameter);
 void onBody(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total);
 void setupWebServer();
 
-void IRAM_ATTR btnFallingRoutine();
-volatile long btnTimer;
-volatile long btnPressCount;
-TaskHandle_t btnPressCountTaskHandle;
-#define btnPressCountTimeout 1000
-
-
-
 void setup() {
   /* Initialize serial communication at 115200 baud */
   Serial.begin(115200);
@@ -69,6 +61,7 @@ void setup() {
   
   /* Setup the global object */
   SMARTEGG.begin();
+  SMARTEGG.dataRec->setupWifi();
   setupWebServer();
   
   /* Setup DNS Server to redirect user to main page */
@@ -82,79 +75,6 @@ void setup() {
   /* Set the LED low */
   pinMode(LED_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);
-
-  /* Setup the button */
-  pinMode(BTN_PIN, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(BTN_PIN), btnFallingRoutine, FALLING);
-}
-
-void IRAM_ATTR btnFallingRoutine() {
-  /* debounce */
-  if(millis() - btnTimer < 50)
-    return;
-
-  // Button press increment
-  btnPressCount ++;
-  
-  btnTimer = millis();
-  digitalWrite(LED_PIN, HIGH);
-  xTaskCreatePinnedToCore(btnTask, "btnTask", 4096, NULL, 1, NULL, 0);
-}
-
-/* Button Task */
-void btnTask(void *pvParameter) {
-  boolean settingsBool = false;
-  boolean ledBool = false;
-  
-  for(;;) {
-    /* debounce */
-    if(millis() - btnTimer < 50)
-      continue;
-
-    /* Flash LED so user knows the button was pressed */
-    if(!ledBool && millis() - btnTimer > 100) {
-      digitalWrite(LED_PIN, LOW);
-      ledBool = true;
-    }
-
-    if(!settingsBool && millis() - btnTimer > 5000) {
-      Serial.println("Settings Erased");
-      digitalWrite(LED_PIN, HIGH);
-      settingsBool = true;
-    }
-  
-    if(digitalRead(BTN_PIN) == HIGH) {
-      //Serial.printf("Button held for %lums\n",millis() - btnTimer);
-
-      digitalWrite(LED_PIN, LOW);
-
-      // Start btnPressTask
-      if(btnPressCountTaskHandle == NULL) {
-        xTaskCreatePinnedToCore(btnPressCountTask, "btnPressCountTask", 2048, NULL, 1, &btnPressCountTaskHandle, 0);
-      }
-
-      // Exit task
-      vTaskDelete(NULL);
-      vTaskSuspend(NULL);
-    }
-
-    vTaskDelay(10);
-  }
-}
-
-void btnPressCountTask(void *pvParameter) {
-  for(;;) {
-    if(millis() - btnTimer > btnPressCountTimeout) {
-      Serial.printf("Button Pressed %lu times\n", btnPressCount);
-      
-      // Exit task
-      btnPressCount = 0;
-      btnPressCountTaskHandle = NULL;
-      vTaskDelete(NULL);
-      vTaskSuspend(NULL);
-    }
-    vTaskDelay(10);
-  }
 }
 
 // Shell Task
@@ -170,7 +90,6 @@ void miyaShTask(void *pvParameter) {
   sh.registerCmd("routeVRef", "SmartEgg", &routeVRefCmd);
   sh.registerCmd("setVRef", "SmartEgg", &setVRefCmd);
   sh.registerCmd("setVReg", "SmartEgg", &setVRegCmd);
-  sh.registerCmd("printplldata", "SmartEgg", &printplldataCmd);
   sh.registerCmd("stopWifi", "SmartEgg", &stopWifiCmd);
   sh.registerCmd("startWifi", "SmartEgg", &startWifiCmd);
   
@@ -179,7 +98,7 @@ void miyaShTask(void *pvParameter) {
   // Loop Task 
   for(;;) {
     sh.run();
-    vTaskDelay(100);
+    vTaskDelay(10);
   }
 }
 
@@ -195,7 +114,7 @@ void dnsServerTask(void *pvParameter) {
   /* Loop Task */
   for(;;) {
     dnsServer.processNextRequest();
-    vTaskDelay(300);
+    vTaskDelay(100);
   }
 }
 
@@ -215,8 +134,6 @@ void setupWebServer() {
     Serial.println("Done");
     Serial.printf("%dKB used out of %dKB\n", SPIFFS.usedBytes()/1024, SPIFFS.totalBytes()/1024);
   }
-
-  SMARTEGG.dataRec->setupWifi();
 
   /* Setup the WebServer */
   m_server.serveStatic("/", SPIFFS, "/html/").setDefaultFile("index.html");
@@ -294,7 +211,6 @@ void setupWebServer() {
     request->send(200, "text/plain", String(SMARTEGG.dataRec->getSpaceLeft()/1024) + "/" + String(EEPROM_SIZE/1024));
   });
 
-
   m_server.on("/functions/getInstant", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200, SMARTEGG.dataRec->getAvgStr());
   });
@@ -361,6 +277,10 @@ void setupWebServer() {
 
   m_server.on("/gen_204", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(204);
+  });
+
+  m_server.on("/connecttest.txt", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(200, "Microsoft Connect Test");
   });
 
   /* Handle 404 */

@@ -369,7 +369,7 @@ void DataRecorder::recordStartHelper() {
   /* Disable the rolling average */
   m_accel->disableRolling();
 
-  m_recTimerInit = micros() + m_sampleRateMicros * 5; // delay start to improve data capture
+  m_recTimerInit = esp_timer_get_time() + m_sampleRateMicros * 5; // delay start to improve data capture
 
   /* Setup recording */
   m_recNumSamples = 0;
@@ -404,7 +404,7 @@ void DataRecorder::recordStopHelper() {
   
   /* Stop recording */
   m_recFlag = false;
-  Serial.printf("Finished recording %lu samples\n", m_recNumSamples);
+  Serial.printf("Finished recording %llu samples\n", m_recNumSamples);
   
   /* Flush the write buffer */
   flushInit = millis();
@@ -504,12 +504,11 @@ void DataRecorder::run() {
   /* Handle Recording */
   if(m_recFlag == true) {
     // Wait for the start time to occur
-    if(m_recTimerInit > micros()) {
+    if(m_recTimerInit > esp_timer_get_time()) {
       return;
     }
 
-    /* Lol don't fall victim to math errors, micros() returns an UNSIGNED long */
-    m_recTimerDelta = (micros() - m_recTimerInit) - (m_sampleRateMicros * m_recNumSamples);
+    m_recTimerDelta = (esp_timer_get_time() - m_recTimerInit) - (m_sampleRateMicros * m_recNumSamples);
     if(m_recTimerDelta > 0) {
       if(m_recNumSamples == 0) {
         /* Turn the LED on */
@@ -518,8 +517,8 @@ void DataRecorder::run() {
       
       if(m_recTimerDelta > m_sampleRateMicros && m_recNumSamples > 0) {
         /* Uh oh, looks like our code is too slow to sample this fast. Better yell at your programmers */
-        Serial.printf("[WARNING] Missed Sample %lu! Code lagging by: %lums\n", m_recNumSamples, m_recTimerDelta/1024);
-        Serial.printf("[DEBUG] currTime: %lums m_sampleRateMicros: %lu\n", (micros() - m_recTimerInit)/1024, m_sampleRateMicros);
+        Serial.printf("[WARNING] Missed Sample %llu! Code lagging by: %llums\n", m_recNumSamples, m_recTimerDelta/1000);
+        Serial.printf("[DEBUG] currTime: %llums m_sampleRateMicros: %llu\n", (esp_timer_get_time() - m_recTimerInit)/1000, m_sampleRateMicros);
         m_recNumSamples += 4; /* Attempt to catch up */
         m_writeAddress += 4;
         m_freeAddress += 4;
@@ -550,7 +549,7 @@ void DataRecorder::run() {
       if(m_recNumSamples % 1000 == 0) {
         float timeRemaining = (m_dataSize / (3 * 2) - m_recNumSamples) * m_sampleRateMicros * pow(10,-6);
         
-        Serial.printf("Logged %lu samples(%.3f seconds left) %lu writes cached (%lu bytes free)\n",
+        Serial.printf("Logged %llu samples(%.3f seconds left) %lu writes cached (%lu bytes free)\n",
                           m_recNumSamples, timeRemaining, m_freeAddress - m_writeAddress,
                           BUFFER_SIZE - (m_freeAddress - m_writeAddress));
       }
@@ -562,17 +561,13 @@ void DataRecorder::run() {
 void DataRecorder::setSampleRate(int samplesPerSecond) {
   m_sampleRateMicros = (long) (((float) 1/(float) samplesPerSecond) * pow(10,6));
   
-  Serial.print("Setting sample rate to ");
-  Serial.print(m_sampleRateMicros);
-  Serial.print(" microseconds (");
-  Serial.print(samplesPerSecond);
-  Serial.println("Hz)");
+  printf("Setting sample rate to %llums (%dHz)\n", m_sampleRateMicros, samplesPerSecond);
 }
 
 void DataRecorder::setSampleRateMicros(unsigned long us) {
   m_sampleRateMicros = us;
   
-  printf("Setting sample rate to %lu\n", m_sampleRateMicros);
+  printf("Setting sample rate to %llu\n", m_sampleRateMicros);
 }
 
 void DataRecorder::setRecordTime(long seconds) {

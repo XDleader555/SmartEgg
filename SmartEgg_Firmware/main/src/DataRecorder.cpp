@@ -460,13 +460,14 @@ void DataRecorder::recordStopHelper() {
   
   /* Write Size and save to memory */
   m_pref->begin(("DR_" + m_currRecording).c_str(), false);
-  m_pref->putULong("numSamples", m_recNumSamples);
+  m_pref->putULong("numSamples", (unsigned long) m_recNumSamples);
 
   /* Check that the data wrote */
-  m_recNumSamples = m_pref->getULong("numSamples", ULONG_MAX);
+  int64_t recNumSamplesBackup = m_recNumSamples;
+  m_recNumSamples = (int64_t) m_pref->getULong("numSamples", ULONG_MAX);
   m_pref->end();
 
-  if(m_recNumSamples == ULONG_MAX) {
+  if(m_recNumSamples != recNumSamplesBackup) {
     Serial.printf("[FATAL] Failed to write numSamples for %s\n", m_currRecording.c_str());
     m_requestStatus = -3;
   }

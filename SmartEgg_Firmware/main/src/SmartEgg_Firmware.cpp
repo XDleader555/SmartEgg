@@ -16,19 +16,21 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#include "Arduino.h"
-#include "AsyncTCP.h"
-#include "ESPAsyncWebServer.h"
+
 #include "Commands.h"
 #include "SmartEgg.h"
 #include "ADXL377.h"
 #include "SPIFFS.h"
+#include "Huzzuh32.h"
 #include <driver/adc.h>
 #include <stdlib.h>
 #include <DNSServer.h>
 #include <MiyaSh.h>
+#include <Arduino.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 
-#define RELEASE_VER "2.1.2"
+#define RELEASE_VER "2.1.3"
 #define DNS_PORT 53
 #define LED_PIN 13
 #define BTN_PIN 0
@@ -50,6 +52,8 @@ void setup() {
   /* Initialize serial communication at 115200 baud */
   Serial.begin(115200);
   Serial.println("\nSerial Communications Begin...");
+
+  Huzzah32.begin();
 
   //Serial.println("Reducing clock speed to 80Mhz");
   //setCpuFrequencyMhz(80);
@@ -90,6 +94,7 @@ void miyaShTask(void *pvParameter) {
   sh.registerCmd("setVReg", "SmartEgg", &setVRegCmd);
   sh.registerCmd("stopWifi", "SmartEgg", &stopWifiCmd);
   sh.registerCmd("startWifi", "SmartEgg", &startWifiCmd);
+  sh.registerCmd("getbattlevel", "SmartEgg", &getBattLevelCmd);
   
   sh.begin();
   
@@ -254,11 +259,24 @@ void setupWebServer() {
   });
 
   m_server.on("/functions/getAPName", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->send(200, SMARTEGG.dataRec->getAPName());
+    request->send(200, "text/plain", SMARTEGG.dataRec->getAPName());
   });
 
   m_server.on("/functions/getVersion", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200, "text/plain", RELEASE_VER);
+  });
+
+  m_server.on("/functions/getBatteryLevel", HTTP_GET, [](AsyncWebServerRequest *request){
+    float batteryLevel = Huzzah32.readBattery();
+    char strLevel[100];
+
+    printf("Battery Level: ");
+    if(batteryLevel == -1) {
+      request->send(200, "text/plain", "Charging");
+    } else {
+      sprintf(strLevel, "%.2f\n", batteryLevel);
+      request->send(200, "text/plain", strLevel); 
+    }
   });
 
   m_server.on("/functions/reboot", HTTP_GET, [](AsyncWebServerRequest *request){
@@ -284,6 +302,7 @@ void setupWebServer() {
   m_server.on("/redirect", HTTP_GET, [](AsyncWebServerRequest *request){
     request->redirect("/master-controller.html");
   });
+  
 
   /* Handle 404 */
   m_server.onNotFound([](AsyncWebServerRequest *request){

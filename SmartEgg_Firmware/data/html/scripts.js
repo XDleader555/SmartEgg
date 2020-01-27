@@ -26,6 +26,8 @@ $(document).ready(function() {
 
   // $("#main-content").hide();
   getVersion();
+  getBattLevel();
+  getAPName();
 	updateDropList();
 });
 
@@ -334,6 +336,32 @@ function getVersion() {
     url: requestStr
   }).done(function(response) {
     document.getElementById("ver").innerHTML = "SmartEgg Version: " + response;
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    // If fail
+    console.log(textStatus + ': ' + errorThrown);
+  });
+}
+
+function getBattLevel() {
+  let requestStr = urlEndPoint+"/getBatteryLevel"
+  return  $.ajax({
+    dataType: 'text',
+    url: requestStr
+  }).done(function(response) {
+    document.getElementById("battlevel").innerHTML = "Battery Level: " + response + "%";
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    // If fail
+    console.log(textStatus + ': ' + errorThrown);
+  });
+}
+
+function getAPName() {
+  let requestStr = urlEndPoint+"/getAPName"
+  return  $.ajax({
+    dataType: 'text',
+    url: requestStr
+  }).done(function(response) {
+    document.getElementById("apname").innerHTML = "AP Name: " + response;
   }).fail(function(jqXHR, textStatus, errorThrown) {
     // If fail
     console.log(textStatus + ': ' + errorThrown);

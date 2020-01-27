@@ -1,7 +1,14 @@
-#include "Arduino.h"
-#include "MiyaSh.h"
-#include "containsint.h"
+#include <Arduino.h>
+#include <containsint.h>
+#include <MiyaSh.h>
+#include "Huzzuh32.h"
 #include "SmartEgg.h"
+
+inline void getBattLevelCmd(MiyaSh* shell, String args[], int arglen) {
+  float batteryLevel = Huzzah32.readBattery();
+
+  printf("Battery Level: %.2f\n", batteryLevel);
+}
 
 inline void startWifiCmd(MiyaSh* shell, String args[], int arglen) {
   SMARTEGG.dataRec->setupWifi();

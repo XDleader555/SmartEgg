@@ -25,6 +25,8 @@ $(document).ready(function() {
     $("#my-modal").hide();
 
   // $("#main-content").hide();
+  setInterval(isConnected, 3000);
+  isConnected();
   getVersion();
   getBattLevel();
   getAPName();
@@ -363,6 +365,20 @@ function getAPName() {
   }).done(function(response) {
     document.getElementById("apname").innerHTML = "AP Name: " + response;
   }).fail(function(jqXHR, textStatus, errorThrown) {
+    // If fail
+    console.log(textStatus + ': ' + errorThrown);
+  });
+}
+
+function isConnected() {
+  let requestStr = "/gen_204"
+  return  $.ajax({
+    dataType: 'text',
+    url: requestStr
+  }).done(function(response) {
+    document.getElementById("connstat").innerHTML = "Status: Connected";
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    document.getElementById("connstat").innerHTML = "Status: Disconnected";
     // If fail
     console.log(textStatus + ': ' + errorThrown);
   });

@@ -303,7 +303,6 @@ void setupWebServer() {
     request->redirect("/master-controller.html");
   });
   
-
   /* Handle 404 */
   m_server.onNotFound([](AsyncWebServerRequest *request){
     Serial.printf("NotFound: http://%s%s\n", request->host().c_str(), request->url().c_str());

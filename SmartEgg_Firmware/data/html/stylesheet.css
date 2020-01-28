@@ -12,13 +12,13 @@
   font-size: 18px;
 }
 
-.version-foot {
-  position: fixed;
-  left: 10px;
-  bottom: 10px;
+.debug-info {
+  position: absolute;
+  right: 10px;
+  top: 10px;
   width: 100%;
-  color: black;
-  text-align: left;
+  color: white;
+  text-align: right;
 }
 
 /* Top Right corner Button placement for Delete Drop button */

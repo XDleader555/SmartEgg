@@ -63,8 +63,10 @@ void setup() {
   
   /* Setup the global object */
   SMARTEGG.begin();
-  SMARTEGG.dataRec->setupWifi();
+  SMARTEGG.dataRec->m_server = &m_server;
   setupWebServer();
+
+  SMARTEGG.dataRec->setupWifi();
   
   /* Setup DNS Server to redirect user to main page */
   dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
@@ -309,5 +311,5 @@ void setupWebServer() {
     request->send(404);
   });
 
-  m_server.begin();
+  //m_server.begin(); //Moved to startwifi
 }

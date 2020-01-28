@@ -95,9 +95,11 @@ void DataRecorder::setupWifi() {
   Serial.println(getAPName().c_str());
   Serial.print("Local IP address: ");
   Serial.println(WiFi.softAPIP());
+  m_server->begin();
 }
 
 void DataRecorder::disableWifi() {
+  m_server->end();
   if(esp_wifi_stop() != ESP_OK) {
     Serial.println("Error disabling wifi");
   } else {

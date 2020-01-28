@@ -26,6 +26,7 @@
 #include <math.h>
 #include <Preferences.h>
 #include <esp_wifi.h>
+#include <ESPAsyncWebServer.h>
 #include "wifi.h"
 #include "esp_wifi.h"
 
@@ -64,6 +65,7 @@ inline void ledTask(void *pvParameter) {
 
 class DataRecorder {
   public:
+    AsyncWebServer* m_server;
     DataRecorder(ADXL377* accel);
     void run();
     void printAllValues(String recName);

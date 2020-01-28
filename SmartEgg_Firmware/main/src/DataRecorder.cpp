@@ -278,6 +278,8 @@ int DataRecorder::request(int requestType) {
   /* Wait a max of 5 seconds before timing out */
   timeoutTimerInit = millis();
   while(m_request != REQUEST_EMPTY) {
+    run();
+
     /* Wait until our request is fulfilled */
     if(millis() - timeoutTimerInit > 5000) {
       Serial.println("[WARNING] Request timed out");
@@ -889,40 +891,45 @@ void DataRecorder::chunkedReadInit(String name, int readType) {
 }
 
 int DataRecorder::chunkedRead(uint8_t *buffer, size_t maxLen, size_t index) {
+  auto write = [this, maxLen, index, buffer]() {
+      /* Buffer is full, copy what we need and trim it from the buffer for the next packet */
+      String copyBuffer = m_chunkedBuffer.substring(0, maxLen);
+      m_chunkedBuffer = m_chunkedBuffer.substring(maxLen);
+      Serial.printf("sending %d/%d, sent %dbytes and %lu samples, free ram: %d KB\n",
+                          strlen(copyBuffer.c_str()), maxLen, index, m_chunkedIter, esp_get_free_heap_size()/1024);
+      strcpy((char*) buffer, copyBuffer.c_str());
+      
+      return strlen(copyBuffer.c_str());
+  };
+
+  String readBuffer = "";
+
   if(m_chunkedIter >= m_chunkedNumSamples) {
     Serial.printf("Took %.2fs to send %luKB\n", ((float) (millis() - m_chunkedTimer))/1000l, index/1024l);
     return 0;
   }
 
+
   while(true) {
     if(strlen(m_chunkedBuffer.c_str()) < maxLen) {
-
+      printf("cbLen: %d, maxLen: %d\n", strlen(m_chunkedBuffer.c_str()), maxLen);
       /* End of file, send the rest */
       if(m_chunkedIter >= m_chunkedNumSamples) {
-        goto write;
+        return write();
       }
     } else {
-write:/* Buffer is full, copy what we need and trim it from the buffer for the next packet */
-      String copyBuffer = m_chunkedBuffer.substring(0, maxLen);
-      m_chunkedBuffer = m_chunkedBuffer.substring(maxLen);
-      Serial.printf("sending %d/%d, sent %dbytes and %lu samples\n",
-                          strlen(copyBuffer.c_str()), maxLen, index, m_chunkedIter);
-      strcpy((char*) buffer, copyBuffer.c_str());
-      
-      return strlen(copyBuffer.c_str());
+      return write();
     }
 
     /* Add a new line to the buffer */
     if(m_chunkedReadType == READ_AXES) {
-      String readBuffer = getAxesStr(m_chunkedName, m_chunkedIter++);
-      if (readBuffer != "") {
-        m_chunkedBuffer += readBuffer + "\n";
-      }
+      readBuffer = getAxesStr(m_chunkedName, m_chunkedIter++);
     } else if (m_chunkedReadType == READ_MAGNITUDES) {
-      String readBuffer = getMagStr(m_chunkedName, m_chunkedIter++);
-      if (readBuffer != "") {
-        m_chunkedBuffer += readBuffer + "\n";
-      }
+      readBuffer = getMagStr(m_chunkedName, m_chunkedIter++);
+    }
+
+    if (readBuffer != "") {
+      m_chunkedBuffer += readBuffer + "\n";
     }
   }
 }

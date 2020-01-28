@@ -150,7 +150,7 @@ void setupWebServer() {
 
   m_server.on("/functions/recordStart", HTTP_GET, [](AsyncWebServerRequest *request){
     String recName = request->url().substring(String("/functions/recordStart/").length());
-    Serial.printf("[WEBSERVER] recorsStart - name: \"%s\"\n", recName.c_str());
+    Serial.printf("[WEBSERVER] recordStart - name: \"%s\"\n", recName.c_str());
     
     int resp = SMARTEGG.recordStart(recName);
     request->send(200, "text/plain", String(resp));

@@ -25,7 +25,8 @@ $(document).ready(function() {
     $("#my-modal").hide();
 
   // $("#main-content").hide();
-  setInterval(isConnected, 3000);
+  setInterval(isConnected, 1000);
+  setInterval(getBattLevel, 1000);
   isConnected();
   getVersion();
   getBattLevel();
@@ -301,6 +302,7 @@ function ajaxLoadAllDropData(drop, indexNum) {
   }).fail(function(jqXHR, textStatus, errorThrown) {
     // If fail
     console.log(textStatus + ': ' + errorThrown);
+    alert("Error loading data from egg");
   });
 }
 

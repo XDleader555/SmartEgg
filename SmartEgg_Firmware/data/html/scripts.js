@@ -25,8 +25,6 @@ $(document).ready(function() {
     $("#my-modal").hide();
 
   // $("#main-content").hide();
-  setInterval(isConnected, 1000);
-  setInterval(getBattLevel, 1000);
   isConnected();
   getVersion();
   getBattLevel();
@@ -356,6 +354,8 @@ function getBattLevel() {
   }).fail(function(jqXHR, textStatus, errorThrown) {
     // If fail
     console.log(textStatus + ': ' + errorThrown);
+  }).always(function(data, textStatus, errorThrown) {
+    //setTimeout(getBattLevel, 1000);
   });
 }
 
@@ -383,6 +383,8 @@ function isConnected() {
     document.getElementById("connstat").innerHTML = "Status: Disconnected";
     // If fail
     console.log(textStatus + ': ' + errorThrown);
+  }).always(function(data, textStatus, errorThrown) {
+    //setTimeout(isConnected, 1000);
   });
 }
 

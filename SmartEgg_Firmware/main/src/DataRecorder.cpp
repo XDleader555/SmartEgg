@@ -891,17 +891,6 @@ void DataRecorder::chunkedReadInit(String name, int readType) {
 }
 
 int DataRecorder::chunkedRead(uint8_t *buffer, size_t maxLen, size_t index) {
-  auto write = [this, maxLen, index, buffer]() {
-      /* Buffer is full, copy what we need and trim it from the buffer for the next packet */
-      String copyBuffer = m_chunkedBuffer.substring(0, maxLen);
-      m_chunkedBuffer = m_chunkedBuffer.substring(maxLen);
-      Serial.printf("sending %d/%d, sent %dbytes and %lu samples, free ram: %d KB\n",
-                          strlen(copyBuffer.c_str()), maxLen, index, m_chunkedIter, esp_get_free_heap_size()/1024);
-      strcpy((char*) buffer, copyBuffer.c_str());
-      
-      return strlen(copyBuffer.c_str());
-  };
-
   String readBuffer = "";
 
   if(m_chunkedIter >= m_chunkedNumSamples) {
@@ -911,23 +900,25 @@ int DataRecorder::chunkedRead(uint8_t *buffer, size_t maxLen, size_t index) {
 
 
   while(true) {
-    if(strlen(m_chunkedBuffer.c_str()) < maxLen) {
-      printf("cbLen: %d, maxLen: %d\n", strlen(m_chunkedBuffer.c_str()), maxLen);
-      /* End of file, send the rest */
-      if(m_chunkedIter >= m_chunkedNumSamples) {
-        return write();
-      }
-    } else {
-      return write();
+    /* Buffer is full, copy what we need and trim it from the buffer for the next packet */
+    if(strlen(m_chunkedBuffer.c_str()) >= maxLen || m_chunkedIter >= m_chunkedNumSamples) {
+      String copyBuffer = m_chunkedBuffer.substring(0, maxLen);
+      m_chunkedBuffer = m_chunkedBuffer.substring(maxLen);
+      Serial.printf("sending %d/%d, sent %dbytes and %lu samples, free ram: %d KB\n",
+                          strlen(copyBuffer.c_str()), maxLen, index, m_chunkedIter, esp_get_free_heap_size()/1024);
+      strcpy((char*) buffer, copyBuffer.c_str());
+      
+      return strlen(copyBuffer.c_str());
     }
 
-    /* Add a new line to the buffer */
+    /* Read data into the buffer */
     if(m_chunkedReadType == READ_AXES) {
       readBuffer = getAxesStr(m_chunkedName, m_chunkedIter++);
     } else if (m_chunkedReadType == READ_MAGNITUDES) {
       readBuffer = getMagStr(m_chunkedName, m_chunkedIter++);
     }
 
+    /* Add a new line to the buffer */
     if (readBuffer != "") {
       m_chunkedBuffer += readBuffer + "\n";
     }

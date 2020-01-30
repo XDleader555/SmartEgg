@@ -70,9 +70,9 @@ void setup() {
   dnsServer.start(DNS_PORT, "*", WiFi.softAPIP());
   
   /* Start CPU0 tasks, higher number means higher priority */
-  xTaskCreatePinnedToCore(dnsServerTask, "dnsServerTask", 4096, NULL, 1, NULL, 1);
-  xTaskCreatePinnedToCore(rollingAvgTask, "rollingAvgTask", 4096, NULL, 1, NULL, 1);
-  xTaskCreatePinnedToCore(miyaShTask, "miyaguchiShell", 4096, NULL, 1, NULL, 1);
+  xTaskCreatePinnedToCore(dnsServerTask, "dnsServerTask", 4096, NULL, 1, NULL, 0);
+  xTaskCreatePinnedToCore(rollingAvgTask, "rollingAvgTask", 4096, NULL, 1, NULL, 0);
+  xTaskCreatePinnedToCore(miyaShTask, "miyaguchiShell", 4096, NULL, 1, NULL, 0);
 
   /* Set the LED HIGH */
   pinMode(LED_PIN, OUTPUT);
@@ -124,6 +124,21 @@ void dnsServerTask(void *pvParameter) {
 /* Application CPU (CPU1) */
 void loop() {
   SMARTEGG.dataRec->run();
+}
+
+void loopTask(void *pvParameters)
+{
+    setup();
+    for(;;) {
+        loop();
+        if (serialEventRun) serialEventRun();
+    }
+}
+
+extern "C" void app_main()
+{
+    initArduino();
+    xTaskCreateUniversal(loopTask, "loopTask", 8192, NULL, 1, NULL, 1);
 }
 
 void setupWebServer() {

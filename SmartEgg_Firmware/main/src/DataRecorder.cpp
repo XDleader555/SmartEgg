@@ -394,6 +394,8 @@ void DataRecorder::recordStopHelper() {
   unsigned long checkMutexTimer;
   unsigned long flushInit;
   
+  /* Stop recording */
+  m_recFlag = false;
 
   if(m_requestStatus == -3) {
     return;
@@ -406,8 +408,6 @@ void DataRecorder::recordStopHelper() {
     return;
   }
   
-  /* Stop recording */
-  m_recFlag = false;
   Serial.printf("Finished recording %llu samples\n", m_recNumSamples);
   
 
@@ -901,11 +901,11 @@ int DataRecorder::chunkedRead(uint8_t *buffer, size_t maxLen, size_t index) {
 
   while(true) {
     /* Buffer is full, copy what we need and trim it from the buffer for the next packet */
-    if(strlen(m_chunkedBuffer.c_str()) >= maxLen || m_chunkedIter >= m_chunkedNumSamples) {
-      String copyBuffer = m_chunkedBuffer.substring(0, maxLen);
-      m_chunkedBuffer = m_chunkedBuffer.substring(maxLen);
+    if(strlen(m_chunkedBuffer.c_str()) >= maxLen - 1 || m_chunkedIter >= m_chunkedNumSamples) {
+      String copyBuffer = m_chunkedBuffer.substring(0, maxLen - 1);
+      m_chunkedBuffer = m_chunkedBuffer.substring(maxLen - 1);
       Serial.printf("sending %d/%d, sent %dbytes and %lu samples, free ram: %d KB\n",
-                          strlen(copyBuffer.c_str()), maxLen, index, m_chunkedIter, esp_get_free_heap_size()/1024);
+                          strlen(copyBuffer.c_str()), maxLen - 1, index, m_chunkedIter, esp_get_free_heap_size()/1024);
       strcpy((char*) buffer, copyBuffer.c_str());
       
       return strlen(copyBuffer.c_str());

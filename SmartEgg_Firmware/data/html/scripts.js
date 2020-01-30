@@ -260,6 +260,7 @@ function LoadAllDropData(){
       //no drop data exists, data is stored in order of drops so if drop n's data
       // doesn't exist then neither does n+1 .... Load the rest of the drop's data
       ajaxLoadAllDropData(curDrop, i);
+      break;
     }
   }
 }

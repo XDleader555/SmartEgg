@@ -37,8 +37,6 @@
 
 DNSServer dnsServer;
 AsyncWebServer m_server(80);
-AsyncWebSocket* m_ws;
-AsyncEventSource* m_events;
 
 void webServerTask(void *pvParameters);
 void dnsServerTask(void *pvParameter);
@@ -299,10 +297,6 @@ void setupWebServer() {
 
   m_server.on("/connecttest.txt", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200, "text/plain", "Microsoft Connect Test");
-  });
-
-  m_server.on("/redirect", HTTP_GET, [](AsyncWebServerRequest *request){
-    request->redirect("/master-controller.html");
   });
   
   /* Handle 404 */

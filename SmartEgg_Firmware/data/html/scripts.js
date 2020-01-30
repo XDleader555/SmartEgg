@@ -355,7 +355,7 @@ function getBattLevel() {
     // If fail
     console.log(textStatus + ': ' + errorThrown);
   }).always(function(data, textStatus, errorThrown) {
-    //setTimeout(getBattLevel, 1000);
+    //setTimeout(getBattLevel, 5000);
   });
 }
 
@@ -384,7 +384,7 @@ function isConnected() {
     // If fail
     console.log(textStatus + ': ' + errorThrown);
   }).always(function(data, textStatus, errorThrown) {
-    //setTimeout(isConnected, 1000);
+    setTimeout(isConnected, 5000);
   });
 }
 

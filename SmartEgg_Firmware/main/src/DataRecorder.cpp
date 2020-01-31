@@ -778,7 +778,7 @@ String DataRecorder::getMagStr(String recName, unsigned long index) {
   }
 
   mag = sqrt(mag);
-  rawPointStr += mag;
+  rawPointStr += String(mag, 2);
   
   return(rawPointStr);
 }
@@ -873,6 +873,28 @@ void DataRecorder::printAllValues(String recName) {
   Serial.print("Printed ");
   Serial.print(getNumSamples(recName));
   Serial.print(" values");
+}
+
+/* Fyi, getMagStr doesnt always return the same size, but for estimation purposes
+ * this should work fine.
+ */
+unsigned long DataRecorder::getRecSize(String recName, int readType) {
+    unsigned long bytes = 0;
+    unsigned long numSamples = getNumSamples(recName);
+    
+  if (readType == READ_AXES) {
+    bytes += String("t,x,y,z\n").length();
+  } else if (readType == READ_MAGNITUDES) {
+    bytes += String("t,g\n").length();
+  } 
+
+  if(m_chunkedReadType == READ_AXES) {
+    bytes += (getAxesStr(recName, m_chunkedIter++) + String("\n")).length() * numSamples;
+  } else if (m_chunkedReadType == READ_MAGNITUDES) {
+    bytes += (getMagStr(recName, m_chunkedIter++) + String("\n")).length() * numSamples;
+  }
+
+  return bytes;
 }
 
 void DataRecorder::chunkedReadInit(String name, int readType) {

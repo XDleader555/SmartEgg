@@ -44,3 +44,26 @@
   height: 100vh;
   margin-bottom: -100px;
 }
+
+/* Loading wheel https://stackoverflow.com/questions/20741274/creating-a-transparent-loading-overlay */
+.loading-overlay {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(0,0,0,.75);
+}
+
+#progress {
+  width: 300px;
+  height: 20px;
+  margin-top: -40px;
+  margin-left: -150px;
+
+  position: absolute;
+  top: 60%;
+  left: 50%;
+}

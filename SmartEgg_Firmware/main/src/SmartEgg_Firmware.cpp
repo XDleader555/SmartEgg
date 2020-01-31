@@ -257,6 +257,12 @@ void setupWebServer() {
     request->send(response);
   });
 
+  m_server.on("/functions/recordGetMagnitudesSize", HTTP_GET, [](AsyncWebServerRequest *request){
+    String recName = request->url().substring(String("/functions/recordGetMagnitudesSize/").length());
+    Serial.printf("[WEBSERVER] recordGetMagnitudesSize - name: \"%s\"\n", recName.c_str());
+    request->send(200, "text/plain", String(SMARTEGG.dataRec->getRecSize(recName, READ_MAGNITUDES)));
+  });
+
   /*
   m_server.on("/functions/recordGetMaxMagnitude", HTTP_GET, [](AsyncWebServerRequest *request){
     String recName = request->url().substring(String("/functions/recordGetMaxMagnitude/").length());

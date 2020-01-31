@@ -141,6 +141,7 @@ class DataRecorder {
     
   public:
     void chunkedReadInit(String name, int readType);
+    unsigned long getRecSize(String recName, int readType);
     int chunkedRead(uint8_t *buffer, size_t maxLen, size_t index);
 };
 

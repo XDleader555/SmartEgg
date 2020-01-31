@@ -6,6 +6,11 @@ let m_DropDataList = [];
 // Keep track of data currently being loaded
 let m_loadingList = [];
 
+// Progress bar
+let m_progressbar = document.getElementById("progress");
+let m_progressbytes;
+let m_progressInterval;
+
 //Index of the active tab
 let m_activeDropIndex; 
 
@@ -265,8 +270,42 @@ function LoadAllDropData(){
     }
   }
 
+  // Get download size
+  let dlsizelist = Array.from(m_loadingList);
+  m_progressbar.max = 0;
+  m_progressbytes = 0;
+  ajaxGetDropSize(dlsizelist);
+  console.log("Download size=" + m_progressbar.max);
+
   // Initialize waterfall ajax call
   ajaxLoadAllDropData(m_loadingList.shift());
+}
+
+function updateProgressBar() {
+  let getDataUrl = urlEndPoint+"/rec/" + drop.name;
+}
+
+// Get download size approximation
+function ajaxGetDropSize(dropList) {
+  let drop = dropList.shift();
+  let getDataUrl = urlEndPoint+"/recordGetMagnitudesSize/" + drop.name;
+  let currprogressbytes = 0;
+
+  return $.ajax({
+    dataType: 'text',
+    url: getDataUrl
+  }).done(function(data) {
+    m_progressbar.max += parseInt(data);
+    console.log(drop.name + " size=" + parseInt(data));
+
+    if(dropList.length > 0) {
+      ajaxLoadAllDropData(dropList.shift());
+    }
+  }).fail(function(jqXHR, textStatus, errorThrown) {
+    // If fail
+    console.log(textStatus + ': ' + errorThrown);
+    alert("Error loading data from egg");
+  });
 }
 
 // Get Data for each drop and store it in session storage
@@ -276,7 +315,18 @@ function ajaxLoadAllDropData(drop) {
   return $.ajax({
     dataType: 'text',
     url: getDataUrl
+  }).beforeSend(function (thisXHR) {
+    m_progressInterval = setInterval (function() {
+      if (thisXHR.readyState > 2) {
+        currprogressbytes = thisXHR.responseText.length;
+        m_progressbar.value = m_progressbytes + currprogressbytes;
+      }
+    }, 200);
   }).done(function(data) {
+    // Finish progress bar
+    m_progressbytes += currprogressbytes;
+    clearInterval(m_progressInterval);
+
     //Plot data
     let magnitudeData = parseDataMagnitude(data);
     drop.chartData = magnitudeData;
@@ -299,6 +349,7 @@ function ajaxLoadAllDropData(drop) {
     }
   }).fail(function(jqXHR, textStatus, errorThrown) {
     // If fail
+    clearInterval(m_progressInterval);
     console.log(textStatus + ': ' + errorThrown);
     alert("Error loading data from egg");
   });

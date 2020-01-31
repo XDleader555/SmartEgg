@@ -59,8 +59,9 @@ public:
 
         esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, V_REF, &m_characteristics);
         esp_adc_cal_get_voltage((adc_channel_t) ADC_BATT, &m_characteristics, &rawRead);
-
-        batt_percent = mapf(rawRead, 0, ((4700/2.0)/V_REG)*4096.0, 0, 100);
+        
+        rawRead += 500; // offset value
+        batt_percent = mapf((float) rawRead, ((3200/2.0)/((float) V_REG))*4096.0, ((4200/2.0)/((float) V_REG))*4096.0, 0, 100);
         
         return MIN(MAX(batt_percent, 0.0), 100.0);
     };

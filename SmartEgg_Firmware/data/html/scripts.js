@@ -28,11 +28,11 @@ $(document).ready(function() {
     $("#my-modal").hide();
 
   // $("#main-content").hide();
+	updateDropList();
   isConnected();
   getVersion();
   getBattLevel();
   getAPName();
-	updateDropList();
 });
 
 // Start the recording action and toggle the appropriate areas
@@ -378,13 +378,26 @@ function isConnected() {
     dataType: 'text',
     url: requestStr
   }).done(function(response) {
-    document.getElementById("connstat").innerHTML = "Status: Connected";
+    // Check if any datasets are downloading
+    let loadingData = false;
+    for(let e of m_DropDataList) {
+      if(e.loading) {
+        loadingData = true;
+        break;
+      }
+    }
+
+    if(loadingData) {
+      document.getElementById("connstat").innerHTML = "Status: Loading data";
+    } else {
+      document.getElementById("connstat").innerHTML = "Status: Ready";
+    }
   }).fail(function(jqXHR, textStatus, errorThrown) {
     document.getElementById("connstat").innerHTML = "Status: Disconnected";
     // If fail
     console.log(textStatus + ': ' + errorThrown);
   }).always(function(data, textStatus, errorThrown) {
-    setTimeout(isConnected, 5000);
+    setTimeout(isConnected, 3000);
   });
 }
 

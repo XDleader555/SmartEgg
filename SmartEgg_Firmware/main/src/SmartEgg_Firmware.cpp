@@ -30,7 +30,7 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
-#define RELEASE_VER "2.1.3"
+#define RELEASE_VER "2.1.4"
 #define DNS_PORT 53
 #define LED_PIN 13
 #define BTN_PIN 0
@@ -138,7 +138,7 @@ void loopTask(void *pvParameters)
 extern "C" void app_main()
 {
     initArduino();
-    xTaskCreateUniversal(loopTask, "loopTask", 8192, NULL, 1, NULL, 1);
+    xTaskCreateUniversal(loopTask, "loopTask", 8192, NULL, 2, NULL, 1);
 }
 
 void setupWebServer() {

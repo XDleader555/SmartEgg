@@ -310,6 +310,10 @@ void setupWebServer() {
     request->send(204);
   });
 
+  m_server.on("/bootcount", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(200, "text/plain", String(SMARTEGG.bootcount));
+  });
+
   m_server.on("/connecttest.txt", HTTP_GET, [](AsyncWebServerRequest *request){
     request->send(200, "text/plain", "Microsoft Connect Test");
   });

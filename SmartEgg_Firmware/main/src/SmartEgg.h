@@ -33,6 +33,7 @@ class SmartEgg {
     static void writeTask(void *pvParameters);
     ADXL377* accel;
     DataRecorder* dataRec;
+    unsigned long bootcount;
 
   private:
     Preferences* m_pref;                 /* Preferences variable */

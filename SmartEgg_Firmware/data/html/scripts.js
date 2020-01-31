@@ -12,6 +12,9 @@ let m_activeDropIndex;
 // For production with egg
 let urlEndPoint = "/functions";
 
+// Bootcount
+let m_bootcount;
+
 // Tracks the next unique identifier for the drops
 let m_nextDropId = 0;
 //TODO pull tab by the id not the index
@@ -373,11 +376,22 @@ function getAPName() {
 }
 
 function isConnected() {
-  let requestStr = "/gen_204"
+  let requestStr = "/bootcount"
   return  $.ajax({
     dataType: 'text',
     url: requestStr
   }).done(function(response) {
+    // Check boot count, if it increased, then the device reset
+    if(m_bootcount == null) {
+      m_bootcount = parseInt(response);
+    } else {
+      if(m_bootcount != parseInt(response)) {
+        document.getElementById("connstat").innerHTML = "Status: Disconnected";
+        alert("500 Internal Server Error\n\nDevice was automatically reset\nTry reloading this page");
+        return;
+      }
+    }
+
     // Check if any datasets are downloading
     let loadingData = false;
     for(let e of m_DropDataList) {
@@ -387,16 +401,18 @@ function isConnected() {
       }
     }
 
+    // Set status
     if(loadingData) {
       document.getElementById("connstat").innerHTML = "Status: Loading data";
     } else {
       document.getElementById("connstat").innerHTML = "Status: Ready";
     }
+
+    setTimeout(isConnected, 3000);
   }).fail(function(jqXHR, textStatus, errorThrown) {
     document.getElementById("connstat").innerHTML = "Status: Disconnected";
     // If fail
     console.log(textStatus + ': ' + errorThrown);
-  }).always(function(data, textStatus, errorThrown) {
     setTimeout(isConnected, 3000);
   });
 }

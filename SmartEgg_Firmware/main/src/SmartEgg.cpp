@@ -8,6 +8,12 @@ bool SmartEgg::begin() {
   dataRec = new DataRecorder(accel);
 
   m_pref = new Preferences();
+  m_pref->begin("SmartEgg", false);
+  bootcount = m_pref->getULong("bootcount", 0);
+  bootcount ++;
+  m_pref->putULong("bootcount", bootcount);
+  m_pref->end();
+  Serial.printf("Bootcount: %lu\r\n", bootcount);
   return true;
 }
 

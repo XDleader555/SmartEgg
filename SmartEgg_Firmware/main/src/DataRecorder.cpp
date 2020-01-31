@@ -278,8 +278,6 @@ int DataRecorder::request(int requestType) {
   /* Wait a max of 5 seconds before timing out */
   timeoutTimerInit = millis();
   while(m_request != REQUEST_EMPTY) {
-    run();
-
     /* Wait until our request is fulfilled */
     if(millis() - timeoutTimerInit > 5000) {
       Serial.println("[WARNING] Request timed out");

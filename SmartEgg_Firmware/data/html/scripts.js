@@ -3,6 +3,9 @@
 //List all drops history
 let m_DropDataList = [];
 
+// Keep track of data currently being loaded
+let m_loadingList = [];
+
 //Index of the active tab
 let m_activeDropIndex; 
 
@@ -257,16 +260,17 @@ function LoadAllDropData(){
       // Clear loading flag
       curDrop.loading = false;
     } else {
-      //no drop data exists, data is stored in order of drops so if drop n's data
-      // doesn't exist then neither does n+1 .... Load the rest of the drop's data
-      ajaxLoadAllDropData(curDrop, i);
-      break;
+      // Selectively load drop data
+      m_loadingList.push(curDrop);
     }
   }
+
+  // Initialize waterfall ajax call
+  ajaxLoadAllDropData(m_loadingList.shift());
 }
 
 // Get Data for each drop and store it in session storage
-function ajaxLoadAllDropData(drop, indexNum) {
+function ajaxLoadAllDropData(drop) {
   let getDataUrl = urlEndPoint+"/recordGetMagnitudes/" + drop.name;
 
   return $.ajax({
@@ -290,13 +294,8 @@ function ajaxLoadAllDropData(drop, indexNum) {
     //Store data locally
     sessionStorage.setItem(drop.name, JSON.stringify(drop.chartData));
 
-    if(indexNum == m_DropDataList.length-1){
-      //TODO: Add loading screen back in
-      //Hide the loading screen on completion of all requests
-      $("#main-content").show();
-    } else {
-      // Load next drop's data
-      ajaxLoadAllDropData(m_DropDataList[indexNum+1], indexNum+1);
+    if(m_loadingList.length > 0) {
+      ajaxLoadAllDropData(m_loadingList.shift());
     }
   }).fail(function(jqXHR, textStatus, errorThrown) {
     // If fail

@@ -31,7 +31,7 @@
 #include "esp_wifi.h"
 
 
-#define RECORD_TIME 15      /* record time */
+#define RECORD_TIME 10      /* record time */
 #define NUM_SAMPLES 1       /* how many samples to take when recording one value, usually 1 is enough */
 #define REC_HZ 500          /* Samples per second */
 #define EEPROM_SIZE 512000  /* Size of the EEPROM */

@@ -188,7 +188,7 @@ void setupWebServer() {
 
   m_server.on("/functions/recordDelete", HTTP_GET, [](AsyncWebServerRequest *request){
     String recName = request->url().substring(String("/functions/recordDelete/").length());
-    Serial.printf("[WEBSERVER] recordDelete - name: \"%s\"\n", recName.c_str());
+    Serial.printf("[WEBSERVER] recordDelete -   : \"%s\"\n", recName.c_str());
     SMARTEGG.dataRec->deleteRecording(recName);
     request->send(200);
   });
